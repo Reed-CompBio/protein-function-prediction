@@ -30,22 +30,38 @@ def read_specific_columns(file_path, columns):
 
 def create_ppi_network(fly_interactome, fly_GO_term):
     G = nx.Graph()
+    protein_protein_edge = 0
+    protein_go_edge = 0
+    protein_node = 0
+    go_node = 0
 
     # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
     for line in fly_interactome:
         if not G.has_node(line[2]):
             G.add_node(line[2], name=line[0], type="protein")
+            protein_node += 1
 
         if not G.has_node(line[3]):
             G.add_node(line[3], name=line[1], type="protein")
+            protein_node += 1
 
         G.add_edge(line[2], line[3], type="protein_protein")
+        protein_protein_edge += 1
 
     # Proteins annotated with a GO term have an edge to a GO term node
     for line in fly_GO_term:
         if not G.has_node(line[1]):
             G.add_node(line[1], type="go_term")
+            go_node += 1
+
         G.add_edge(line[1], line[0], type="protein_go_term")
+        protein_go_edge += 1
+
+    print("protein-protein edge count: ", protein_protein_edge)
+    print("protein-go edge count: ", protein_go_edge)
+    print("protein node count: ", protein_node)
+    print("go node count: ", go_node)
+    print()
 
     return G
 
@@ -96,6 +112,9 @@ def main():
     flybase_interactome_file_path = "./interactome-flybase-collapsed-weighted.txt"
     gene_association_file_path = "./gene_association.fb"
 
+    print("-" * 65)
+    print("network summary")
+
     flybase_columns = [0, 1, 4, 5]
     fly_interactome = read_specific_columns(
         flybase_interactome_file_path, flybase_columns
@@ -105,6 +124,9 @@ def main():
     fly_GO_term = read_specific_columns(gene_association_file_path, fly_GO_columns)
 
     G = create_ppi_network(fly_interactome, fly_GO_term)
+
+    print("total edge count: ", len(G.edges()))
+    print("total node count: ", len(G.nodes()))
 
     proteinGoTermPairs = []
     d = {
@@ -116,7 +138,7 @@ def main():
         "fScore": [],
     }
 
-    for edge in sample(list(fly_GO_term), 100):
+    for edge in sample(list(fly_GO_term), 66912):
         proteinGoTermPairs.append(edge)
 
     i = 1
