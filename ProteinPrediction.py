@@ -138,7 +138,7 @@ def main():
         "fScore": [],
     }
 
-    for edge in sample(list(fly_GO_term), 66912):
+    for edge in sample(list(fly_GO_term), 100000):
         proteinGoTermPairs.append(edge)
 
     i = 1
@@ -150,8 +150,7 @@ def main():
         go_term = edge[1]
 
         print(protein, go_term)
-        temp_G = nx.Graph(G)
-        temp_G.remove_edge(protein, go_term)
+        G.remove_edge(protein, go_term)
 
         N = getProteinProteinNeighbors(G, protein)
         proteinInterestNeighborCount, goProteinEdgeCount, goEdgeCount = (
@@ -179,6 +178,8 @@ def main():
             print(f"{Fore.GREEN}successfully computed f-score{Style.RESET_ALL}")
             print("f-score: ", fScore)
             i += 1
+        G.add_edge(protein, go_term, type="protein_go_term")
+
 
     df = pd.DataFrame(d)
 
