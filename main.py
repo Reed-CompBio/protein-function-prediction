@@ -11,9 +11,19 @@ from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
 from algorithms.degreeFunction import degreeFunction
 from algorithms.overlappingNeighbors import overlappingNeighbors
+import os
+
 
 
 def main():
+    if not os.path.exists("output"):
+        os.makedirs("output")
+        os.makedirs("output/data")
+        os.makedirs("output/images")
+        print(f"Directory 'output' created.")
+    else:
+        print(f"Directory 'output' already exists.")
+
     interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
     go_path = Path("./network/gene_association.fb")
     output_data_path = Path("./output/data/overlapping_neighbors_output.csv")
@@ -57,7 +67,7 @@ def main():
 
     # Save the plot as an image file
     plt.savefig('./output/images/multiple_roc_curves.png')
-    # plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
