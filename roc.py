@@ -136,7 +136,7 @@ def main():
     print("-" * 65)
     print("Sampling Data")
 
-    totalSamples = 1000
+    totalSamples = 5000
 
     for edge in sample(list(fly_GO_term), totalSamples):
         positiveProteinGoTermPairs.append(edge)
@@ -154,7 +154,7 @@ def main():
             tempPairs.remove(sampleEdge)
         negativeProteinGoTermPairs.append([sampleEdge[0], edge[1]])
         print_progress(i, totalSamples)
-        # print(i)
+        print(i)
         i+=1
 
     
