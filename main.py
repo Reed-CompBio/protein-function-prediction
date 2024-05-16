@@ -9,8 +9,8 @@ from colorama import Style
 import random
 from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
-from algorithms.degreeFunction import degreeFunction
-from algorithms.overlappingNeighbors import overlappingNeighbors
+from algorithms.degreeFunction import degree_function
+from algorithms.overlappingNeighbors import overlapping_neighbors
 import os
 
 
@@ -31,7 +31,7 @@ def main():
     sample_size = 5000
 
     overlapping_neighbors_data, overlapping_neighbors_y_true, overlapping_neighbors_y_score = (
-        overlappingNeighbors(
+        overlapping_neighbors(
             interactome_path, go_path, output_data_path, output_image_path, sample_size
         )
     )
@@ -39,7 +39,7 @@ def main():
     output_data_path = Path("./output/data/degree_output.csv")
     output_image_path = Path("./output/images/degree_roc.png")
 
-    degreeFunctionData, degreeFunctionYTrue, degreeFunctionYScore = degreeFunction(
+    degree_function_data, degree_function_y_true, degree_function_y_score = degree_function(
         interactome_path, go_path, output_data_path, output_image_path, sample_size
     )
 
@@ -49,7 +49,7 @@ def main():
     roc_auc1 = auc(fpr1, tpr1)
 
     # Compute ROC curve and ROC area for the second classifier
-    fpr2, tpr2, thresholds2 = roc_curve(degreeFunctionYTrue, degreeFunctionYScore)
+    fpr2, tpr2, thresholds2 = roc_curve(degree_function_y_true, degree_function_y_score)
     roc_auc2 = auc(fpr2, tpr2)
 
     # Plot ROC Curve for both classifiers
