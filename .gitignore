@@ -43,3 +43,5 @@ env/
 
 # Project specific
 *.log
+
+output/
