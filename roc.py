@@ -7,11 +7,7 @@ from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
 import random
-import time
 from sklearn.metrics import roc_curve, auc
-
-
-
 
 
 def read_specific_columns(file_path, columns):
@@ -70,35 +66,39 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
     return G
 
+
 def getNeighbors(G: nx.Graph, node, edgeType):
     res = G.edges(node, data=True)
     neighbors = []
     for edge in res:
-        if(edge[2]["type"] == edgeType):
+        if edge[2]["type"] == edgeType:
             neighborNode = [edge[1], edge[2]]
             neighbors.append(neighborNode)
 
     return neighbors
 
+
 def getGoAnnotatedProteinCount(G: nx.Graph, nodeList, goTerm):
     count = 0
     for element in nodeList:
-        if(G.has_edge(element[0], goTerm)):
-            count+=1
+        if G.has_edge(element[0], goTerm):
+            count += 1
     return count
+
 
 def print_progress(current, total, bar_length=40):
     # Calculate the progress as a percentage
     percent = float(current) / total
     # Determine the number of hash marks in the progress bar
-    arrow = '-' * int(round(percent * bar_length) - 1) + '>'
-    spaces = ' ' * (bar_length - len(arrow))
+    arrow = "-" * int(round(percent * bar_length) - 1) + ">"
+    spaces = " " * (bar_length - len(arrow))
 
     # Construct the progress bar string
     progress_bar = f"[{arrow + spaces}] {int(round(percent * 100))}%"
 
     # Print the progress bar, overwriting the previous line
-    print(f'\r{progress_bar}', end='')
+    print(f"\r{progress_bar}", end="")
+
 
 def main():
     colorama_init()
@@ -146,8 +146,8 @@ def main():
     for edge in positiveProteinGoTermPairs:
         sampleEdge = random.choice(tempPairs)
         tempPairs.remove(sampleEdge)
-        #removes duplicate proteins and if a protein has a corresponding edge to the GO term in the network
-        while (sampleEdge[0] == edge[0] and not G.has_edge(sampleEdge[0], edge[1])):
+        # removes duplicate proteins and if a protein has a corresponding edge to the GO term in the network
+        while sampleEdge[0] == edge[0] and not G.has_edge(sampleEdge[0], edge[1]):
             print("Found a duplicate or has an exisitng edge")
             tempPairs.append(sampleEdge)
             sampleEdge = random.choice(tempPairs)
@@ -155,9 +155,8 @@ def main():
         negativeProteinGoTermPairs.append([sampleEdge[0], edge[1]])
         print_progress(i, totalSamples)
         print(i)
-        i+=1
+        i += 1
 
-    
     print("-" * 65)
     print("Calculating Protein Prediction")
 
@@ -166,51 +165,73 @@ def main():
     # 50% of the data are proteins that are annotated to a GO term
     # 50% of the data are proteins that are not annotated to a GO term
 
-    #true postiive rate = sensitivity = (true positives) / (true positives + false negatives)
-    #false positive rate = (1 - specificity) = false positives / (false positives + true negatives)
+    # true postiive rate = sensitivity = (true positives) / (true positives + false negatives)
+    # false positive rate = (1 - specificity) = false positives / (false positives + true negatives)
 
     # precision = goProteinEdgeCount / proteinInterestNeighborCount
     # recall = goProteinEdgeCount / goEdgeCount
     # return 2 * ((precision * recall) / (precision + recall))
 
-    totalScores = {"protein": [], "goTerm": [], "proProNeighbor": [], "goNeighbor": [], "goAnnotatedProProNeighbors": [], "score": [], "label": []}
+    totalScores = {
+        "protein": [],
+        "goTerm": [],
+        "proProNeighbor": [],
+        "goNeighbor": [],
+        "goAnnotatedProProNeighbors": [],
+        "score": [],
+        "label": [],
+    }
     i = 0
-    for positiveEdge, negativeEdge in zip(positiveProteinGoTermPairs, negativeProteinGoTermPairs):
+    for positiveEdge, negativeEdge in zip(
+        positiveProteinGoTermPairs, negativeProteinGoTermPairs
+    ):
 
         positiveProProNeighbor = getNeighbors(G, positiveEdge[0], "protein_protein")
         positiveGoNeighbor = getNeighbors(G, positiveEdge[1], "protein_go_term")
-        positiveGoAnnotatedProteinCount =  getGoAnnotatedProteinCount(G, positiveProProNeighbor, positiveEdge[1])
-        positiveScore = (positiveGoAnnotatedProteinCount) / (len(positiveProProNeighbor) + len(positiveGoNeighbor))
+        positiveGoAnnotatedProteinCount = getGoAnnotatedProteinCount(
+            G, positiveProProNeighbor, positiveEdge[1]
+        )
+        positiveScore = (positiveGoAnnotatedProteinCount) / (
+            len(positiveProProNeighbor) + len(positiveGoNeighbor)
+        )
 
         negativeProProNeighbor = getNeighbors(G, negativeEdge[0], "protein_protein")
         negativeGoNeighbor = getNeighbors(G, negativeEdge[1], "protein_go_term")
-        negativeGoAnnotatedProteinCount = getGoAnnotatedProteinCount(G, negativeProProNeighbor, negativeEdge[1])
-        negativeScore = (negativeGoAnnotatedProteinCount) / (len(negativeProProNeighbor) + len(negativeGoNeighbor))
-
+        negativeGoAnnotatedProteinCount = getGoAnnotatedProteinCount(
+            G, negativeProProNeighbor, negativeEdge[1]
+        )
+        negativeScore = (negativeGoAnnotatedProteinCount) / (
+            len(negativeProProNeighbor) + len(negativeGoNeighbor)
+        )
 
         totalScores["protein"].append(positiveEdge[0])
         totalScores["goTerm"].append(positiveEdge[1])
         totalScores["proProNeighbor"].append(len(positiveProProNeighbor))
         totalScores["goNeighbor"].append(len(positiveGoNeighbor))
-        totalScores["goAnnotatedProProNeighbors"].append(positiveGoAnnotatedProteinCount)
+        totalScores["goAnnotatedProProNeighbors"].append(
+            positiveGoAnnotatedProteinCount
+        )
         totalScores["score"].append(positiveScore)
         if positiveScore > 0.1:
             totalScores["label"].append("TP")
-        else:totalScores["label"].append("FP")
-
+        else:
+            totalScores["label"].append("FP")
 
         totalScores["protein"].append(negativeEdge[0])
         totalScores["goTerm"].append(negativeEdge[1])
         totalScores["proProNeighbor"].append(len(negativeProProNeighbor))
         totalScores["goNeighbor"].append(len(negativeGoNeighbor))
-        totalScores["goAnnotatedProProNeighbors"].append(negativeGoAnnotatedProteinCount)
+        totalScores["goAnnotatedProProNeighbors"].append(
+            negativeGoAnnotatedProteinCount
+        )
         totalScores["score"].append(negativeScore)
         if negativeScore > 0.01:
             totalScores["label"].append("TN")
-        else:totalScores["label"].append("FN")
+        else:
+            totalScores["label"].append("FN")
 
         print_progress(i, totalSamples)
-        i+=1
+        i += 1
 
     tp = 0
     fp = 0
@@ -220,14 +241,14 @@ def main():
     for label in totalScores["label"]:
         match label:
             case "TP":
-                tp+=1
+                tp += 1
             case "FP":
-                fp+=1
+                fp += 1
             case "TN":
-                tn+=1
+                tn += 1
             case "FN":
-                fn+=1
-    
+                fn += 1
+
     print("")
     print("-" * 65)
     print("Results")
@@ -238,37 +259,38 @@ def main():
     print("False Negatives: ", fn)
 
     y_true = []
-    y_scores = []  
+    y_scores = []
 
     i = 1
     for score in totalScores["score"]:
-        if i%2 == 1:
+        if i % 2 == 1:
             y_true.append(1)
-        else:   
+        else:
             y_true.append(0)
         y_scores.append(score)
-        i+=1 
+        i += 1
 
     # for t,s, in zip(y_true, y_scores):
     #     print(t, s)
-
 
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
 
     plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.plot(
+        fpr, tpr, color="darkorange", lw=2, label="ROC curve (area = %0.2f)" % roc_auc
+    )
+    plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Receiver Operating Characteristic")
     plt.legend(loc="lower right")
     plt.show()
 
     totalScoresDf = pd.DataFrame(totalScores)
-        
+
     totalScoresDf.to_csv("totalScoresDf.csv", index=False, sep="\t")
 
 
