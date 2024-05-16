@@ -8,6 +8,7 @@ from colorama import Fore
 from colorama import Style
 import random
 from sklearn.metrics import roc_curve, auc, f1_score
+from pathlib import Path
 
 
 def read_specific_columns(file_path, columns):
@@ -32,7 +33,6 @@ def read_specific_columns(file_path, columns):
 
 def create_ppi_network(fly_interactome, fly_GO_term):
     print("")
-    print("-" * 65)
     print("Initializing network")
     i = 1
     totalProgress = len(fly_interactome) + len(fly_GO_term)
@@ -70,7 +70,6 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
     print("")
     print("")
-    print("-" * 65)
     print("network summary")
 
     print("protein-protein edge count: ", protein_protein_edge)
@@ -122,15 +121,22 @@ def print_progress(current, total, bar_length=65):
     print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
 
 
-def overlappingNeighbors( ):
+def overlappingNeighbors(
+    interactome_path: Path,
+    go_path: Path,
+    output_data_path: Path,
+    output_image_path: Path,
+    sampleSize: int,
+):
+    """
+    evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
+    """
     colorama_init()
     print("-" * 65)
     print("overlapping neighbors algorithm")
 
-    flybase_interactome_file_path = (
-        "../network/interactome-flybase-collapsed-weighted.txt"
-    )
-    gene_association_file_path = "../network/gene_association.fb"
+    flybase_interactome_file_path = interactome_path
+    gene_association_file_path = go_path
 
     flybase_columns = [0, 1, 4, 5]
     fly_interactome = read_specific_columns(
@@ -154,10 +160,9 @@ def overlappingNeighbors( ):
     }
 
     print("")
-    print("-" * 65)
     print("Sampling Data")
 
-    totalSamples = 5000
+    totalSamples = sampleSize
 
     for edge in sample(list(fly_GO_term), totalSamples):
         positiveProteinGoTermPairs.append(edge)
@@ -179,78 +184,71 @@ def overlappingNeighbors( ):
 
     print("")
     print("")
-    print("-" * 65)
     print("Calculating Protein Prediction")
 
     # have two sets of positive and negative protein-go_term pairs
     # for each pair, calculate the score of how well they predict whether a protein should be annotated to a GO term.
     # 50% of the data are proteins that are annotated to a GO term
     # 50% of the data are proteins that are not annotated to a GO term
+    # score equation (1 + number of GoAnnotatedProteinCount) / (number of positiveProProNeighbor + number of positiveGoNeighbor)
 
-    # true postiive rate = sensitivity = (true positives) / (true positives + false negatives)
-    # false positive rate = (1 - specificity) = false positives / (false positives + true negatives)
-
-    # precision = goProteinEdgeCount / proteinInterestNeighborCount
-    # recall = goProteinEdgeCount / goEdgeCount
-    # return 2 * ((precision * recall) / (precision + recall))
-
-    totalScores = {
+    data = {
         "protein": [],
         "goTerm": [],
         "proProNeighbor": [],
         "goNeighbor": [],
         "goAnnotatedProProNeighbors": [],
-        "score": []
+        "score": [],
     }
     i = 1
     for positiveEdge, negativeEdge in zip(
         positiveProteinGoTermPairs, negativeProteinGoTermPairs
     ):
 
+        # calculate the score for the positive set
         positiveProProNeighbor = getNeighbors(G, positiveEdge[0], "protein_protein")
         positiveGoNeighbor = getNeighbors(G, positiveEdge[1], "protein_go_term")
         positiveGoAnnotatedProteinCount = getGoAnnotatedProteinCount(
             G, positiveProProNeighbor, positiveEdge[1]
         )
-        positiveScore = (positiveGoAnnotatedProteinCount) / (
+        positiveScore = (1 + positiveGoAnnotatedProteinCount) / (
             len(positiveProProNeighbor) + len(positiveGoNeighbor)
         )
 
+        # calculate the score for the negative set
         negativeProProNeighbor = getNeighbors(G, negativeEdge[0], "protein_protein")
         negativeGoNeighbor = getNeighbors(G, negativeEdge[1], "protein_go_term")
         negativeGoAnnotatedProteinCount = getGoAnnotatedProteinCount(
             G, negativeProProNeighbor, negativeEdge[1]
         )
-        negativeScore = (negativeGoAnnotatedProteinCount) / (
+        negativeScore = (1 + negativeGoAnnotatedProteinCount) / (
             len(negativeProProNeighbor) + len(negativeGoNeighbor)
         )
 
-        totalScores["protein"].append(positiveEdge[0])
-        totalScores["goTerm"].append(positiveEdge[1])
-        totalScores["proProNeighbor"].append(len(positiveProProNeighbor))
-        totalScores["goNeighbor"].append(len(positiveGoNeighbor))
-        totalScores["goAnnotatedProProNeighbors"].append(
-            positiveGoAnnotatedProteinCount
-        )
-        totalScores["score"].append(positiveScore)
+        # input positive and negative score to data
+        data["protein"].append(positiveEdge[0])
+        data["goTerm"].append(positiveEdge[1])
+        data["proProNeighbor"].append(len(positiveProProNeighbor))
+        data["goNeighbor"].append(len(positiveGoNeighbor))
+        data["goAnnotatedProProNeighbors"].append(positiveGoAnnotatedProteinCount)
+        data["score"].append(positiveScore)
 
-        totalScores["protein"].append(negativeEdge[0])
-        totalScores["goTerm"].append(negativeEdge[1])
-        totalScores["proProNeighbor"].append(len(negativeProProNeighbor))
-        totalScores["goNeighbor"].append(len(negativeGoNeighbor))
-        totalScores["goAnnotatedProProNeighbors"].append(
-            negativeGoAnnotatedProteinCount
-        )
-        totalScores["score"].append(negativeScore)
+        data["protein"].append(negativeEdge[0])
+        data["goTerm"].append(negativeEdge[1])
+        data["proProNeighbor"].append(len(negativeProProNeighbor))
+        data["goNeighbor"].append(len(negativeGoNeighbor))
+        data["goAnnotatedProProNeighbors"].append(negativeGoAnnotatedProteinCount)
+        data["score"].append(negativeScore)
 
         print_progress(i, totalSamples)
         i += 1
 
+    #prepare for roc curve by annotating the score by postiive or negative
     y_true = []
     y_scores = []
 
     i = 1
-    for score in totalScores["score"]:
+    for score in data["score"]:
         if i % 2 == 1:
             y_true.append(1)
         else:
@@ -261,10 +259,8 @@ def overlappingNeighbors( ):
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
 
-
     print("")
     print("")
-    print("-" * 65)
     print("Calculating optimal thresholds")
 
     # 1. Maximize the Youden’s J Statistic
@@ -281,12 +277,12 @@ def overlappingNeighbors( ):
         f1 = f1_score(y_true, y_pred)
         f1_scores.append(f1)
         print_progress(i, len(thresholds))
-        i+=1
+        i += 1
     optimal_index_f1 = np.argmax(f1_scores)
     optimal_threshold_f1 = thresholds[optimal_index_f1]
 
     # 3. Minimize the Distance to (0, 1) on the ROC Curve
-    distances = np.sqrt((1 - tpr) ** 2 + fpr ** 2)
+    distances = np.sqrt((1 - tpr) ** 2 + fpr**2)
     optimal_index_distance = np.argmin(distances)
     optimal_threshold_distance = thresholds[optimal_index_distance]
 
@@ -294,32 +290,16 @@ def overlappingNeighbors( ):
     print("")
     print("-" * 65)
     print("Results")
+    print("")
 
     # Print the optimal thresholds for each approach
-    print("Optimal Threshold (Youden's J):", optimal_threshold_youden)
+    print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden)
     print("Optimal Threshold (F1 Score):", optimal_threshold_f1)
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
-
-    plt.figure()
-    plt.plot(
-        fpr, tpr, color="darkorange", lw=2, label="ROC curve (area = %0.2f)" % roc_auc
-    )
-    plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("Receiver Operating Characteristic")
-    plt.legend(loc="lower right")
-    plt.show()
-
-    totalScoresDf = pd.DataFrame(totalScores)
-
-    totalScoresDf.to_csv("../output/totalScoresDf.csv", index=False, sep="\t")
+    print(Style.RESET_ALL +  "")
 
 
-def main():
-    overlappingNeighbors()
+    df = pd.DataFrame(data)
+    df.to_csv(output_data_path, index=False, sep="\t")
 
-if __name__ == "__main__":
-    main()
+    return (data, y_true, y_scores)
