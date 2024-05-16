@@ -7,7 +7,7 @@ from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
 import random
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, f1_score
 
 
 def read_specific_columns(file_path, columns):
@@ -31,6 +31,11 @@ def read_specific_columns(file_path, columns):
 
 
 def create_ppi_network(fly_interactome, fly_GO_term):
+    print("")
+    print("-" * 65)
+    print("Initializing network")
+    i = 1
+    totalProgress = len(fly_interactome) + len(fly_GO_term)
     G = nx.Graph()
     protein_protein_edge = 0
     protein_go_edge = 0
@@ -49,6 +54,8 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
         G.add_edge(line[2], line[3], type="protein_protein")
         protein_protein_edge += 1
+        print_progress(i, totalProgress)
+        i += 1
 
     # Proteins annotated with a GO term have an edge to a GO term node
     for line in fly_GO_term:
@@ -58,11 +65,20 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
         G.add_edge(line[1], line[0], type="protein_go_term")
         protein_go_edge += 1
+        print_progress(i, totalProgress)
+        i += 1
+
+    print("")
+    print("")
+    print("-" * 65)
+    print("network summary")
 
     print("protein-protein edge count: ", protein_protein_edge)
     print("protein-go edge count: ", protein_go_edge)
     print("protein node count: ", protein_node)
     print("go node count: ", go_node)
+    print("total edge count: ", len(G.edges()))
+    print("total node count: ", len(G.nodes()))
 
     return G
 
@@ -86,28 +102,35 @@ def getGoAnnotatedProteinCount(G: nx.Graph, nodeList, goTerm):
     return count
 
 
-def print_progress(current, total, bar_length=40):
+def print_progress(current, total, bar_length=65):
     # Calculate the progress as a percentage
     percent = float(current) / total
     # Determine the number of hash marks in the progress bar
     arrow = "-" * int(round(percent * bar_length) - 1) + ">"
     spaces = " " * (bar_length - len(arrow))
 
+    # Choose color based on completion
+    if current < total:
+        color = Fore.YELLOW
+    else:
+        color = Fore.GREEN
+
     # Construct the progress bar string
     progress_bar = f"[{arrow + spaces}] {int(round(percent * 100))}%"
 
-    # Print the progress bar, overwriting the previous line
-    print(f"\r{progress_bar}", end="")
+    # Print the progress bar with color, overwriting the previous line
+    print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
 
 
-def main():
+def overlappingNeighbors( ):
     colorama_init()
-
-    flybase_interactome_file_path = "./interactome-flybase-collapsed-weighted.txt"
-    gene_association_file_path = "./gene_association.fb"
-
     print("-" * 65)
-    print("network summary")
+    print("overlapping neighbors algorithm")
+
+    flybase_interactome_file_path = (
+        "../network/interactome-flybase-collapsed-weighted.txt"
+    )
+    gene_association_file_path = "../network/gene_association.fb"
 
     flybase_columns = [0, 1, 4, 5]
     fly_interactome = read_specific_columns(
@@ -118,9 +141,6 @@ def main():
     fly_GO_term = read_specific_columns(gene_association_file_path, fly_GO_columns)
 
     G = create_ppi_network(fly_interactome, fly_GO_term)
-
-    print("total edge count: ", len(G.edges()))
-    print("total node count: ", len(G.nodes()))
 
     positiveProteinGoTermPairs = []
     negativeProteinGoTermPairs = []
@@ -133,6 +153,7 @@ def main():
         "fScore": [],
     }
 
+    print("")
     print("-" * 65)
     print("Sampling Data")
 
@@ -142,7 +163,7 @@ def main():
         positiveProteinGoTermPairs.append(edge)
 
     tempPairs = positiveProteinGoTermPairs.copy()
-    i = 0
+    i = 1
     for edge in positiveProteinGoTermPairs:
         sampleEdge = random.choice(tempPairs)
         tempPairs.remove(sampleEdge)
@@ -154,9 +175,10 @@ def main():
             tempPairs.remove(sampleEdge)
         negativeProteinGoTermPairs.append([sampleEdge[0], edge[1]])
         print_progress(i, totalSamples)
-        print(i)
         i += 1
 
+    print("")
+    print("")
     print("-" * 65)
     print("Calculating Protein Prediction")
 
@@ -178,10 +200,9 @@ def main():
         "proProNeighbor": [],
         "goNeighbor": [],
         "goAnnotatedProProNeighbors": [],
-        "score": [],
-        "label": [],
+        "score": []
     }
-    i = 0
+    i = 1
     for positiveEdge, negativeEdge in zip(
         positiveProteinGoTermPairs, negativeProteinGoTermPairs
     ):
@@ -212,10 +233,6 @@ def main():
             positiveGoAnnotatedProteinCount
         )
         totalScores["score"].append(positiveScore)
-        if positiveScore > 0.1:
-            totalScores["label"].append("TP")
-        else:
-            totalScores["label"].append("FP")
 
         totalScores["protein"].append(negativeEdge[0])
         totalScores["goTerm"].append(negativeEdge[1])
@@ -225,38 +242,9 @@ def main():
             negativeGoAnnotatedProteinCount
         )
         totalScores["score"].append(negativeScore)
-        if negativeScore > 0.01:
-            totalScores["label"].append("TN")
-        else:
-            totalScores["label"].append("FN")
 
         print_progress(i, totalSamples)
         i += 1
-
-    tp = 0
-    fp = 0
-    tn = 0
-    fn = 0
-
-    for label in totalScores["label"]:
-        match label:
-            case "TP":
-                tp += 1
-            case "FP":
-                fp += 1
-            case "TN":
-                tn += 1
-            case "FN":
-                fn += 1
-
-    print("")
-    print("-" * 65)
-    print("Results")
-
-    print("True Positives: ", tp)
-    print("False Positives: ", fp)
-    print("True Negatives: ", tn)
-    print("False Negatives: ", fn)
 
     y_true = []
     y_scores = []
@@ -270,11 +258,47 @@ def main():
         y_scores.append(score)
         i += 1
 
-    # for t,s, in zip(y_true, y_scores):
-    #     print(t, s)
-
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
+
+
+    print("")
+    print("")
+    print("-" * 65)
+    print("Calculating optimal thresholds")
+
+    # 1. Maximize the Youden’s J Statistic
+    youden_j = tpr - fpr
+    optimal_index_youden = np.argmax(youden_j)
+    optimal_threshold_youden = thresholds[optimal_index_youden]
+
+    i = 1
+    # 2. Maximize the F1 Score
+    # For each threshold, compute the F1 score
+    f1_scores = []
+    for threshold in thresholds:
+        y_pred = (y_scores >= threshold).astype(int)
+        f1 = f1_score(y_true, y_pred)
+        f1_scores.append(f1)
+        print_progress(i, len(thresholds))
+        i+=1
+    optimal_index_f1 = np.argmax(f1_scores)
+    optimal_threshold_f1 = thresholds[optimal_index_f1]
+
+    # 3. Minimize the Distance to (0, 1) on the ROC Curve
+    distances = np.sqrt((1 - tpr) ** 2 + fpr ** 2)
+    optimal_index_distance = np.argmin(distances)
+    optimal_threshold_distance = thresholds[optimal_index_distance]
+
+    print("")
+    print("")
+    print("-" * 65)
+    print("Results")
+
+    # Print the optimal thresholds for each approach
+    print("Optimal Threshold (Youden's J):", optimal_threshold_youden)
+    print("Optimal Threshold (F1 Score):", optimal_threshold_f1)
+    print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
 
     plt.figure()
     plt.plot(
@@ -291,8 +315,11 @@ def main():
 
     totalScoresDf = pd.DataFrame(totalScores)
 
-    totalScoresDf.to_csv("totalScoresDf.csv", index=False, sep="\t")
+    totalScoresDf.to_csv("../output/totalScoresDf.csv", index=False, sep="\t")
 
+
+def main():
+    overlappingNeighbors()
 
 if __name__ == "__main__":
     main()
