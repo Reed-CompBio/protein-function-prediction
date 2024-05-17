@@ -6,7 +6,6 @@ import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore
 from colorama import Style
-import random
 from sklearn.metrics import roc_curve, auc, f1_score, precision_recall_curve
 from pathlib import Path
 from algorithms.degreeFunction import degree_function
@@ -86,6 +85,7 @@ def read_specific_columns(file_path, columns):
 
 
 def main():
+    print("Starting workflow")
     if not os.path.exists("output"):
         os.makedirs("output")
     if not os.path.exists("output/data"):
