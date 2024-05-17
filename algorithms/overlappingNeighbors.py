@@ -4,11 +4,11 @@ from random import sample
 import pandas as pd
 import numpy as np
 from colorama import init as colorama_init
-from colorama import Fore, Back
-from colorama import Style
+from colorama import Fore, Back, Style
 import random
 from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
+from tools.helper import print_progress
 
 
 def read_specific_columns(file_path, columns):
@@ -31,57 +31,6 @@ def read_specific_columns(file_path, columns):
         return None
 
 
-def create_ppi_network(fly_interactome, fly_GO_term):
-    print("")
-    print("Initializing network")
-    i = 1
-    total_progress = len(fly_interactome) + len(fly_GO_term)
-    G = nx.Graph()
-    protein_protein_edge = 0
-    protein_go_edge = 0
-    protein_node = 0
-    go_node = 0
-
-    # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
-    for line in fly_interactome:
-        if not G.has_node(line[2]):
-            G.add_node(line[2], name=line[0], type="protein")
-            protein_node += 1
-
-        if not G.has_node(line[3]):
-            G.add_node(line[3], name=line[1], type="protein")
-            protein_node += 1
-
-        G.add_edge(line[2], line[3], type="protein_protein")
-        protein_protein_edge += 1
-        print_progress(i, total_progress)
-        i += 1
-
-    # Proteins annotated with a GO term have an edge to a GO term node
-    for line in fly_GO_term:
-        if not G.has_node(line[1]):
-            G.add_node(line[1], type="go_term")
-            go_node += 1
-
-        G.add_edge(line[1], line[0], type="protein_go_term")
-        protein_go_edge += 1
-        print_progress(i, total_progress)
-        i += 1
-
-    print("")
-    print("")
-    print("network summary")
-
-    print("protein-protein edge count: ", protein_protein_edge)
-    print("protein-go edge count: ", protein_go_edge)
-    print("protein node count: ", protein_node)
-    print("go node count: ", go_node)
-    print("total edge count: ", len(G.edges()))
-    print("total node count: ", len(G.nodes()))
-
-    return G
-
-
 def get_neighbors(G: nx.Graph, node, edgeType):
     res = G.edges(node, data=True)
     neighbors = []
@@ -101,53 +50,16 @@ def get_go_annotated_protein_count(G: nx.Graph, nodeList, goTerm):
     return count
 
 
-def print_progress(current, total, bar_length=65):
-    # Calculate the progress as a percentage
-    percent = float(current) / total
-    # Determine the number of hash marks in the progress bar
-    arrow = "-" * int(round(percent * bar_length) - 1) + ">"
-    spaces = " " * (bar_length - len(arrow))
-
-    # Choose color based on completion
-    if current < total:
-        color = Fore.YELLOW
-    else:
-        color = Fore.GREEN
-
-    # Construct the progress bar string
-    progress_bar = f"[{arrow + spaces}] {int(round(percent * 100))}%"
-
-    # Print the progress bar with color, overwriting the previous line
-    print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
-
-
 def overlapping_neighbors(
-    interactome_path: Path,
-    go_path: Path,
-    output_data_path: Path,
-    output_image_path: Path,
-    sample_size: int,
+    go_terms: Path, output_data_path: Path, sample_size: int, G: nx.Graph
 ):
     """
     evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
     """
     colorama_init()
     print("-" * 65)
-    print(Fore.GREEN + Back.BLACK +"overlapping neighbors algorithm")
-    print(Style.RESET_ALL +"")
-
-    flybase_interactome_file_path = interactome_path
-    gene_association_file_path = go_path
-
-    flybase_columns = [0, 1, 4, 5]
-    fly_interactome = read_specific_columns(
-        flybase_interactome_file_path, flybase_columns
-    )
-
-    fly_GO_columns = [1, 4]
-    fly_GO_term = read_specific_columns(gene_association_file_path, fly_GO_columns)
-
-    G = create_ppi_network(fly_interactome, fly_GO_term)
+    print(Fore.GREEN + Back.BLACK + "overlapping neighbors algorithm")
+    print(Style.RESET_ALL + "")
 
     positive_protein_go_term_pairs = []
     negative_protein_go_term_pairs = []
@@ -157,7 +69,7 @@ def overlapping_neighbors(
 
     total_samples = sample_size
 
-    for edge in sample(list(fly_GO_term), total_samples):
+    for edge in sample(list(go_terms), total_samples):
         positive_protein_go_term_pairs.append(edge)
 
     temp_pairs = positive_protein_go_term_pairs.copy()
@@ -199,7 +111,9 @@ def overlapping_neighbors(
     ):
 
         # calculate the score for the positive set
-        positive_pro_pro_neighbor = get_neighbors(G, positive_edge[0], "protein_protein")
+        positive_pro_pro_neighbor = get_neighbors(
+            G, positive_edge[0], "protein_protein"
+        )
         positive_go_neighbor = get_neighbors(G, positive_edge[1], "protein_go_term")
         positive_go_annotated_protein_count = get_go_annotated_protein_count(
             G, positive_pro_pro_neighbor, positive_edge[1]
@@ -209,7 +123,9 @@ def overlapping_neighbors(
         )
 
         # calculate the score for the negative set
-        negative_pro_pro_neighbor = get_neighbors(G, negative_edge[0], "protein_protein")
+        negative_pro_pro_neighbor = get_neighbors(
+            G, negative_edge[0], "protein_protein"
+        )
         negative_go_neighbor = get_neighbors(G, negative_edge[1], "protein_go_term")
         negative_go_annotated_protein_count = get_go_annotated_protein_count(
             G, negative_pro_pro_neighbor, negative_edge[1]
@@ -223,20 +139,24 @@ def overlapping_neighbors(
         data["go_term"].append(positive_edge[1])
         data["pro_pro_neighbor"].append(len(positive_pro_pro_neighbor))
         data["go_neighbor"].append(len(positive_go_neighbor))
-        data["go_annotated_pro_pro_neighbors"].append(positive_go_annotated_protein_count)
+        data["go_annotated_pro_pro_neighbors"].append(
+            positive_go_annotated_protein_count
+        )
         data["score"].append(positive_score)
 
         data["protein"].append(negative_edge[0])
         data["go_term"].append(negative_edge[1])
         data["pro_pro_neighbor"].append(len(negative_pro_pro_neighbor))
         data["go_neighbor"].append(len(negative_go_neighbor))
-        data["go_annotated_pro_pro_neighbors"].append(negative_go_annotated_protein_count)
+        data["go_annotated_pro_pro_neighbors"].append(
+            negative_go_annotated_protein_count
+        )
         data["score"].append(negative_score)
 
         print_progress(i, total_samples)
         i += 1
 
-    #prepare for roc curve by annotating the score by postiive or negative
+    # prepare for roc curve by annotating the score by postiive or negative
     y_true = []
     y_scores = []
 
@@ -289,8 +209,7 @@ def overlapping_neighbors(
     print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden)
     print("Optimal Threshold (F1 Score):", optimal_threshold_f1)
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
-    print(Style.RESET_ALL +  "")
-
+    print(Style.RESET_ALL + "")
 
     df = pd.DataFrame(data)
     df.to_csv(output_data_path, index=False, sep="\t")
