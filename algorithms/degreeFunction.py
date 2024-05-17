@@ -4,11 +4,12 @@ from random import sample
 import pandas as pd
 import numpy as np
 from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
+from colorama import Fore, Back, Style
 import random
 from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
+from tools.helper import print_progress
+
 
 
 def read_specific_columns(file_path, columns):
@@ -35,7 +36,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     print("")
     print("Initializing network")
     i = 1
-    totalProgress = len(fly_interactome) + len(fly_GO_term)
+    total_progress = len(fly_interactome) + len(fly_GO_term)
     G = nx.Graph()
     protein_protein_edge = 0
     protein_go_edge = 0
@@ -54,7 +55,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
         G.add_edge(line[2], line[3], type="protein_protein")
         protein_protein_edge += 1
-        print_progress(i, totalProgress)
+        print_progress(i, total_progress)
         i += 1
 
     # Proteins annotated with a GO term have an edge to a GO term node
@@ -65,7 +66,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
         G.add_edge(line[1], line[0], type="protein_go_term")
         protein_go_edge += 1
-        print_progress(i, totalProgress)
+        print_progress(i, total_progress)
         i += 1
 
     print("")
@@ -82,66 +83,31 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     return G
 
 
-def print_progress(current, total, bar_length=65):
-    # Calculate the progress as a percentage
-    percent = float(current) / total
-    # Determine the number of hash marks in the progress bar
-    arrow = "-" * int(round(percent * bar_length) - 1) + ">"
-    spaces = " " * (bar_length - len(arrow))
-
-    # Choose color based on completion
-    if current < total:
-        color = Fore.YELLOW
-    else:
-        color = Fore.GREEN
-
-    # Construct the progress bar string
-    progress_bar = f"[{arrow + spaces}] {int(round(percent * 100))}%"
-
-    # Print the progress bar with color, overwriting the previous line
-    print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
-
-
 def normalize(data):
     data = np.array(data)
     min_val = data.min()
     max_val = data.max()
-    
+
     if min_val == max_val:
         return np.zeros_like(data)
 
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
 
-def degreeFunction(
-    interactome_path: Path,
-    go_path: Path,
-    output_data_path: Path,
-    output_image_path: Path,
-    sampleSize: int,
+
+def degree_function(
+    go_terms: Path, output_data_path: Path, sample_size: int, G: nx.Graph
 ):
-    colorama_init()    
+    colorama_init()
     print("-" * 65)
-    print("degree function predictor algorithm")
+    print(Fore.GREEN + Back.BLACK + "degree function predictor algorithm")
+    print(Style.RESET_ALL + "")
 
-    flybase_interactome_file_path = interactome_path
-    gene_association_file_path = go_path
-
-    flybase_columns = [0, 1, 4, 5]
-    fly_interactome = read_specific_columns(
-        flybase_interactome_file_path, flybase_columns
-    )
-
-    fly_GO_columns = [1, 4]
-    fly_GO_term = read_specific_columns(gene_association_file_path, fly_GO_columns)
-
-    G = create_ppi_network(fly_interactome, fly_GO_term)
-
-    positiveProteinGoTermPairs = []
-    negativeProteinGoTermPairs = []
+    positive_protein_go_term_pairs = []
+    negative_protein_go_term_pairs = []
     data = {
         "protein": [],
-        "goTerm": [],
+        "go_term": [],
         "degree": [],
         "score": [],
     }
@@ -149,50 +115,49 @@ def degreeFunction(
     print("")
     print("Sampling Data")
 
-    totalSamples = sampleSize
+    total_samples = sample_size
 
-    for edge in sample(list(fly_GO_term), totalSamples):
-        positiveProteinGoTermPairs.append(edge)
+    for edge in sample(list(go_terms), total_samples):
+        positive_protein_go_term_pairs.append(edge)
 
-    tempPairs = positiveProteinGoTermPairs.copy()
+    temp_pairs = positive_protein_go_term_pairs.copy()
     i = 1
-    for edge in positiveProteinGoTermPairs:
-        sampleEdge = random.choice(tempPairs)
-        tempPairs.remove(sampleEdge)
+    for edge in positive_protein_go_term_pairs:
+        sample_edge = random.choice(temp_pairs)
+        temp_pairs.remove(sample_edge)
         # removes duplicate proteins and if a protein has a corresponding edge to the GO term in the network
-        while sampleEdge[0] == edge[0] and not G.has_edge(sampleEdge[0], edge[1]):
+        while sample_edge[0] == edge[0] and not G.has_edge(sample_edge[0], edge[1]):
             print("Found a duplicate or has an exisitng edge")
-            tempPairs.append(sampleEdge)
-            sampleEdge = random.choice(tempPairs)
-            tempPairs.remove(sampleEdge)
-        negativeProteinGoTermPairs.append([sampleEdge[0], edge[1]])
-        print_progress(i, totalSamples)
+            temp_pairs.append(sample_edge)
+            sample_edge = random.choice(temp_pairs)
+            temp_pairs.remove(sample_edge)
+        negative_protein_go_term_pairs.append([sample_edge[0], edge[1]])
+        print_progress(i, total_samples)
         i += 1
 
     print("")
     print("")
     print("Calculating Protein Prediction")
 
-    for positiveEdge, negativeEdge in zip(
-        positiveProteinGoTermPairs, negativeProteinGoTermPairs
+    for positive_edge, negative_edge in zip(
+        positive_protein_go_term_pairs, negative_protein_go_term_pairs
     ):
-        positiveProtein = positiveEdge[0]
-        negativeProtein = negativeEdge[0]
-        goTerm = positiveEdge[1]
+        positive_protein = positive_edge[0]
+        negative_protein = negative_edge[0]
+        go_term = positive_edge[1]
 
-        data["protein"].append(positiveProtein)
-        data["goTerm"].append(goTerm)
-        data["degree"].append(G.degree(positiveProtein))
-        data["protein"].append(negativeProtein)
-        data["goTerm"].append(goTerm)
-        data["degree"].append(G.degree(negativeProtein))
+        data["protein"].append(positive_protein)
+        data["go_term"].append(go_term)
+        data["degree"].append(G.degree(positive_protein))
+        data["protein"].append(negative_protein)
+        data["go_term"].append(go_term)
+        data["degree"].append(G.degree(negative_protein))
 
-    normalizedData = normalize(data["degree"])
-    for item in normalizedData:
+    normalized_data = normalize(data["degree"])
+    for item in normalized_data:
         data["score"].append(item)
 
-
-    #prepare for roc curve by annotating the score by postiive or negative
+    # prepare for roc curve by annotating the score by postiive or negative
     y_true = []
     y_scores = []
 
@@ -244,7 +209,7 @@ def degreeFunction(
     print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden)
     print("Optimal Threshold (F1 Score):", optimal_threshold_f1)
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
-    print(Style.RESET_ALL +  "")
+    print(Style.RESET_ALL + "")
 
     df = pd.DataFrame(data)
     df.to_csv(output_data_path, index=False, sep="\t")
