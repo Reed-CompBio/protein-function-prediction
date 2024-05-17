@@ -88,7 +88,6 @@ def read_specific_columns(file_path, columns):
 def main():
     if not os.path.exists("output"):
         os.makedirs("output")
-        print(f"Directory 'output' created.")
     if not os.path.exists("output/data"):
         os.makedirs("output/data")
     if not os.path.exists("output/images"):
