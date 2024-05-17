@@ -4,11 +4,12 @@ from random import sample
 import pandas as pd
 import numpy as np
 from colorama import init as colorama_init
-from colorama import Fore, Back
-from colorama import Style
+from colorama import Fore, Back, Style
 import random
 from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
+from tools.helper import print_progress
+
 
 
 def read_specific_columns(file_path, columns):
@@ -82,61 +83,25 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     return G
 
 
-def print_progress(current, total, bar_length=65):
-    # Calculate the progress as a percentage
-    percent = float(current) / total
-    # Determine the number of hash marks in the progress bar
-    arrow = "-" * int(round(percent * bar_length) - 1) + ">"
-    spaces = " " * (bar_length - len(arrow))
-
-    # Choose color based on completion
-    if current < total:
-        color = Fore.YELLOW
-    else:
-        color = Fore.GREEN
-
-    # Construct the progress bar string
-    progress_bar = f"[{arrow + spaces}] {int(round(percent * 100))}%"
-
-    # Print the progress bar with color, overwriting the previous line
-    print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
-
-
 def normalize(data):
     data = np.array(data)
     min_val = data.min()
     max_val = data.max()
-    
+
     if min_val == max_val:
         return np.zeros_like(data)
 
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
 
+
 def degree_function(
-    interactome_path: Path,
-    go_path: Path,
-    output_data_path: Path,
-    output_image_path: Path,
-    sample_size: int,
+    go_terms: Path, output_data_path: Path, sample_size: int, G: nx.Graph
 ):
-    colorama_init()    
+    colorama_init()
     print("-" * 65)
     print(Fore.GREEN + Back.BLACK + "degree function predictor algorithm")
-    print(Style.RESET_ALL +"")
-
-    flybase_interactome_file_path = interactome_path
-    gene_association_file_path = go_path
-
-    flybase_columns = [0, 1, 4, 5]
-    fly_interactome = read_specific_columns(
-        flybase_interactome_file_path, flybase_columns
-    )
-
-    fly_GO_columns = [1, 4]
-    fly_GO_term = read_specific_columns(gene_association_file_path, fly_GO_columns)
-
-    G = create_ppi_network(fly_interactome, fly_GO_term)
+    print(Style.RESET_ALL + "")
 
     positive_protein_go_term_pairs = []
     negative_protein_go_term_pairs = []
@@ -152,7 +117,7 @@ def degree_function(
 
     total_samples = sample_size
 
-    for edge in sample(list(fly_GO_term), total_samples):
+    for edge in sample(list(go_terms), total_samples):
         positive_protein_go_term_pairs.append(edge)
 
     temp_pairs = positive_protein_go_term_pairs.copy()
@@ -192,8 +157,7 @@ def degree_function(
     for item in normalized_data:
         data["score"].append(item)
 
-
-    #prepare for roc curve by annotating the score by postiive or negative
+    # prepare for roc curve by annotating the score by postiive or negative
     y_true = []
     y_scores = []
 
@@ -245,7 +209,7 @@ def degree_function(
     print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden)
     print("Optimal Threshold (F1 Score):", optimal_threshold_f1)
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
-    print(Style.RESET_ALL +  "")
+    print(Style.RESET_ALL + "")
 
     df = pd.DataFrame(data)
     df.to_csv(output_data_path, index=False, sep="\t")
