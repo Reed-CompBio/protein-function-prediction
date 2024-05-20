@@ -8,8 +8,8 @@ from colorama import Fore
 from colorama import Style
 from sklearn.metrics import roc_curve, auc, f1_score, precision_recall_curve
 from pathlib import Path
-from algorithms.degreeFunction import degree_function
-from algorithms.overlappingNeighbors import overlapping_neighbors
+from algorithms.degree_function import degree_function
+from algorithms.overlapping_neighbors import overlapping_neighbors
 from tools.helper import print_progress
 import os
 
