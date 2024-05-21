@@ -9,6 +9,7 @@ from algorithms.degree_function import degree_function
 from algorithms.overlapping_neighbors import overlapping_neighbors
 from tools.helper import print_progress
 import os
+import sys
 
 
 def create_ppi_network(fly_interactome, fly_GO_term):
@@ -47,6 +48,11 @@ def create_ppi_network(fly_interactome, fly_GO_term):
             go_term_list.append(line[1])
             go_node += 1
 
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
+            protein_node += 1
+
         G.add_edge(line[1], line[0], type="protein_go_term")
         protein_go_edge += 1
         print_progress(i, total_progress)
@@ -66,16 +72,16 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     return G, protein_list, go_term_list
 
 
-def read_specific_columns(file_path, columns):
+def read_specific_columns(file_path, columns, delimit):
     try:
         with open(file_path, "r") as file:
             next(file)
             data = []
             for line in file:
-                parts = line.strip().split("\t")
+                parts = line.strip().split(delimit)
                 selected_columns = []
                 for col in columns:
-                    selected_columns.append(parts[col])
+                    selected_columns.append(parts[col].replace('"', ""))
                 data.append(selected_columns)
             return data
     except FileNotFoundError:
@@ -98,16 +104,18 @@ def main():
         os.makedirs("input")
 
     interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_path = Path("./network/gene_association.fb")
+    go_association_path = Path("./network/fly_proGo.csv")
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
-    sample_size = 50000
+    sample_size = 100
 
     interactome_columns = [0, 1, 4, 5]
-    interactome = read_specific_columns(interactome_path, interactome_columns)
+    interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
 
-    go_columns = [1, 4]
-    go_protein_pairs = read_specific_columns(go_path, go_columns)
+    go_inferred_columns = [0, 2]
+    go_protein_pairs = read_specific_columns(
+        go_association_path, go_inferred_columns, ","
+    )
 
     protein_list = []
     go_term_list = []
@@ -116,6 +124,9 @@ def main():
 
     positive_protein_go_term_pairs = {"protein": [], "go": []}
     negative_protein_go_term_pairs = {"protein": [], "go": []}
+
+    print("")
+    print("Sampling Data")
 
     # sample the data
     for edge in sample(list(go_protein_pairs), sample_size):
