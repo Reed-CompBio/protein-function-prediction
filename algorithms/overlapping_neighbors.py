@@ -1,35 +1,11 @@
-import matplotlib.pyplot as plt
 import networkx as nx
-from random import sample
 import pandas as pd
 import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
-import random
 from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
 from tools.helper import print_progress
-import sys
-
-
-def read_specific_columns(file_path, columns):
-    try:
-        with open(file_path, "r") as file:
-            next(file)
-            data = []
-            for line in file:
-                parts = line.strip().split("\t")
-                selected_columns = []
-                for col in columns:
-                    selected_columns.append(parts[col])
-                data.append(selected_columns)
-            return data
-    except FileNotFoundError:
-        print(f"Error: File '{file_path}' not found.")
-        return None
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
 
 
 def get_neighbors(G: nx.Graph, node, edgeType):
@@ -43,7 +19,7 @@ def get_neighbors(G: nx.Graph, node, edgeType):
     return neighbors
 
 
-def get_go_annotated_protein_count(G: nx.Graph, nodeList, goTerm):
+def get_go_annotated_pro_pro_neighbor_count(G: nx.Graph, nodeList, goTerm):
     count = 0
     for element in nodeList:
         if G.has_edge(element[0], goTerm):
@@ -74,7 +50,7 @@ def overlapping_neighbors(
     # for each pair, calculate the score of how well they predict whether a protein should be annotated to a GO term.
     # 50% of the data are proteins that are annotated to a GO term
     # 50% of the data are proteins that are not annotated to a GO term
-    # score equation (1 + number of GoAnnotatedProteinCount) / (number of ProProNeighbor + number of GoNeighbor)
+    # score equation (1 + number of ProProNeighbor that are annotated to the go term) / (number of ProProNeighbor + number of GoNeighbor)
 
     data = {
         "protein": [],
@@ -95,10 +71,10 @@ def overlapping_neighbors(
             G, positive_protein, "protein_protein"
         )
         positive_go_neighbor = get_neighbors(G, positive_go, "protein_go_term")
-        positive_go_annotated_protein_count = get_go_annotated_protein_count(
+        positive_go_annotated_pro_pro_neighbor_count = get_go_annotated_pro_pro_neighbor_count(
             G, positive_pro_pro_neighbor, positive_go
         )
-        positive_score = (1 + positive_go_annotated_protein_count) / (
+        positive_score = (1 + positive_go_annotated_pro_pro_neighbor_count) / (
             len(positive_pro_pro_neighbor) + len(positive_go_neighbor)
         )
 
@@ -107,10 +83,10 @@ def overlapping_neighbors(
             G, negative_protein, "protein_protein"
         )
         negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
-        negative_go_annotated_protein_count = get_go_annotated_protein_count(
-            G, negative_pro_pro_neighbor, positive_go[1]
+        negative_go_annotated_protein_neighbor_count = get_go_annotated_pro_pro_neighbor_count(
+            G, negative_pro_pro_neighbor, negative_go
         )
-        negative_score = (1 + negative_go_annotated_protein_count) / (
+        negative_score = (1 + negative_go_annotated_protein_neighbor_count) / (
             len(negative_pro_pro_neighbor) + len(negative_go_neighbor)
         )
 
@@ -120,7 +96,7 @@ def overlapping_neighbors(
         data["pro_pro_neighbor"].append(len(positive_pro_pro_neighbor))
         data["go_neighbor"].append(len(positive_go_neighbor))
         data["go_annotated_pro_pro_neighbors"].append(
-            positive_go_annotated_protein_count
+            positive_go_annotated_pro_pro_neighbor_count
         )
         data["score"].append(positive_score)
         data["true_label"].append(1)
@@ -130,11 +106,10 @@ def overlapping_neighbors(
         data["pro_pro_neighbor"].append(len(negative_pro_pro_neighbor))
         data["go_neighbor"].append(len(negative_go_neighbor))
         data["go_annotated_pro_pro_neighbors"].append(
-            negative_go_annotated_protein_count
+            negative_go_annotated_protein_neighbor_count
         )
         data["score"].append(negative_score)
         data["true_label"].append(0)
-
 
         print_progress(i, sample_size)
         i += 1

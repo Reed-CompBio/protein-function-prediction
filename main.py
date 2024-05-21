@@ -3,17 +3,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from random import sample
 import pandas as pd
-import numpy as np
-from colorama import init as colorama_init
-from colorama import Fore
-from colorama import Style
-from sklearn.metrics import roc_curve, auc, f1_score, precision_recall_curve
+from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from pathlib import Path
 from algorithms.degree_function import degree_function
 from algorithms.overlapping_neighbors import overlapping_neighbors
 from tools.helper import print_progress
 import os
-import sys
 
 
 def create_ppi_network(fly_interactome, fly_GO_term):
@@ -106,7 +101,7 @@ def main():
     go_path = Path("./network/gene_association.fb")
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
-    sample_size = 5000
+    sample_size = 50000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns)
@@ -119,7 +114,6 @@ def main():
 
     G, protein_list, go_term_list = create_ppi_network(interactome, go_protein_pairs)
 
-    sample_size = 5000
     positive_protein_go_term_pairs = {"protein": [], "go": []}
     negative_protein_go_term_pairs = {"protein": [], "go": []}
 
@@ -129,7 +123,6 @@ def main():
         positive_protein_go_term_pairs["go"].append(edge[1])
 
     i = 1
-    existing_edge_count = 0
 
     for protein, go in zip(
         positive_protein_go_term_pairs["protein"], positive_protein_go_term_pairs["go"]
@@ -140,13 +133,11 @@ def main():
         while G.has_edge(sample_edge["id"], go):
             # print("has an exisitng edge")
             sample_edge = random.choice(protein_list)
-            existing_edge_count += 1
         negative_protein_go_term_pairs["protein"].append(sample_edge["id"])
         negative_protein_go_term_pairs["go"].append(go)
-        # print_progress(i, sample_size)
+        print_progress(i, sample_size)
         i += 1
 
-    print("exisiting edge found: ", existing_edge_count)
     positive_df = pd.DataFrame(positive_protein_go_term_pairs)
     negative_df = pd.DataFrame(negative_protein_go_term_pairs)
 
@@ -156,11 +147,6 @@ def main():
     negative_df.to_csv(
         "./input/negative_protein_go_term_pairs.csv", index=False, sep="\t"
     )
-
-    # for positive , negative in zip(positive_protein_go_term_pairs, negative_protein_go_term_pairs):
-    #     print(positive["protein"], negative["protein"])
-
-    # sys.exit()÷
 
     (
         overlapping_neighbors_data,
@@ -230,7 +216,7 @@ def main():
     plt.ylabel("True Positive Rate")
     plt.title("Receiver Operating Characteristic")
     plt.legend(loc="lower right")
-    plt.savefig("./output/images/multiple_roc_curves.png")
+    plt.savefig(Path(output_image_path, "multiple_roc_curves.png"))
     plt.show()
 
     plt.figure()
@@ -252,7 +238,7 @@ def main():
     plt.ylabel("Precision")
     plt.title("Precision-Recall Curve")
     plt.legend(loc="lower left")
-    plt.savefig("./output/images/multiple_pr_curves.png")
+    plt.savefig(Path(output_image_path, "multiple_pr_curves.png"))
     plt.show()
 
 
