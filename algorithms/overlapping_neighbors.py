@@ -9,6 +9,7 @@ import random
 from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
 from tools.helper import print_progress
+import sys
 
 
 def read_specific_columns(file_path, columns):
@@ -51,7 +52,11 @@ def get_go_annotated_protein_count(G: nx.Graph, nodeList, goTerm):
 
 
 def overlapping_neighbors(
-    go_terms: Path, output_data_path: Path, sample_size: int, G: nx.Graph
+    positive_protein_go_term_pairs: list,
+    negative_protein_go_term_pairs: list,
+    output_data_path: Path,
+    sample_size: int,
+    G: nx.Graph,
 ):
     """
     evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
@@ -61,32 +66,6 @@ def overlapping_neighbors(
     print(Fore.GREEN + Back.BLACK + "overlapping neighbors algorithm")
     print(Style.RESET_ALL + "")
 
-    positive_protein_go_term_pairs = []
-    negative_protein_go_term_pairs = []
-
-    print("")
-    print("Sampling Data")
-
-    total_samples = sample_size
-
-    for edge in sample(list(go_terms), total_samples):
-        positive_protein_go_term_pairs.append(edge)
-
-    temp_pairs = positive_protein_go_term_pairs.copy()
-    i = 1
-    for edge in positive_protein_go_term_pairs:
-        sample_edge = random.choice(temp_pairs)
-        temp_pairs.remove(sample_edge)
-        # removes duplicate proteins and if a protein has a corresponding edge to the GO term in the network
-        while sample_edge[0] == edge[0] and not G.has_edge(sample_edge[0], edge[1]):
-            print("Found a duplicate or has an exisitng edge")
-            temp_pairs.append(sample_edge)
-            sample_edge = random.choice(temp_pairs)
-            temp_pairs.remove(sample_edge)
-        negative_protein_go_term_pairs.append([sample_edge[0], edge[1]])
-        print_progress(i, total_samples)
-        i += 1
-
     print("")
     print("")
     print("Calculating Protein Prediction")
@@ -95,7 +74,7 @@ def overlapping_neighbors(
     # for each pair, calculate the score of how well they predict whether a protein should be annotated to a GO term.
     # 50% of the data are proteins that are annotated to a GO term
     # 50% of the data are proteins that are not annotated to a GO term
-    # score equation (1 + number of GoAnnotatedProteinCount) / (number of positiveProProNeighbor + number of positiveGoNeighbor)
+    # score equation (1 + number of GoAnnotatedProteinCount) / (number of ProProNeighbor + number of GoNeighbor)
 
     data = {
         "protein": [],
@@ -104,19 +83,20 @@ def overlapping_neighbors(
         "go_neighbor": [],
         "go_annotated_pro_pro_neighbors": [],
         "score": [],
+        "true_label": []
     }
     i = 1
-    for positive_edge, negative_edge in zip(
-        positive_protein_go_term_pairs, negative_protein_go_term_pairs
+    for positive_protein, positive_go, negative_protein, negative_go in zip(
+        positive_protein_go_term_pairs["protein"], positive_protein_go_term_pairs["go"],  negative_protein_go_term_pairs["protein"] , negative_protein_go_term_pairs["go"]
     ):
 
         # calculate the score for the positive set
         positive_pro_pro_neighbor = get_neighbors(
-            G, positive_edge[0], "protein_protein"
+            G, positive_protein, "protein_protein"
         )
-        positive_go_neighbor = get_neighbors(G, positive_edge[1], "protein_go_term")
+        positive_go_neighbor = get_neighbors(G, positive_go, "protein_go_term")
         positive_go_annotated_protein_count = get_go_annotated_protein_count(
-            G, positive_pro_pro_neighbor, positive_edge[1]
+            G, positive_pro_pro_neighbor, positive_go
         )
         positive_score = (1 + positive_go_annotated_protein_count) / (
             len(positive_pro_pro_neighbor) + len(positive_go_neighbor)
@@ -124,50 +104,47 @@ def overlapping_neighbors(
 
         # calculate the score for the negative set
         negative_pro_pro_neighbor = get_neighbors(
-            G, negative_edge[0], "protein_protein"
+            G, negative_protein, "protein_protein"
         )
-        negative_go_neighbor = get_neighbors(G, negative_edge[1], "protein_go_term")
+        negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
         negative_go_annotated_protein_count = get_go_annotated_protein_count(
-            G, negative_pro_pro_neighbor, negative_edge[1]
+            G, negative_pro_pro_neighbor, positive_go[1]
         )
         negative_score = (1 + negative_go_annotated_protein_count) / (
             len(negative_pro_pro_neighbor) + len(negative_go_neighbor)
         )
 
         # input positive and negative score to data
-        data["protein"].append(positive_edge[0])
-        data["go_term"].append(positive_edge[1])
+        data["protein"].append(positive_protein)
+        data["go_term"].append(positive_go)
         data["pro_pro_neighbor"].append(len(positive_pro_pro_neighbor))
         data["go_neighbor"].append(len(positive_go_neighbor))
         data["go_annotated_pro_pro_neighbors"].append(
             positive_go_annotated_protein_count
         )
         data["score"].append(positive_score)
+        data["true_label"].append(1)
 
-        data["protein"].append(negative_edge[0])
-        data["go_term"].append(negative_edge[1])
+        data["protein"].append(negative_protein)
+        data["go_term"].append(negative_go)
         data["pro_pro_neighbor"].append(len(negative_pro_pro_neighbor))
         data["go_neighbor"].append(len(negative_go_neighbor))
         data["go_annotated_pro_pro_neighbors"].append(
             negative_go_annotated_protein_count
         )
         data["score"].append(negative_score)
+        data["true_label"].append(0)
 
-        print_progress(i, total_samples)
+
+        print_progress(i, sample_size)
         i += 1
 
-    # prepare for roc curve by annotating the score by postiive or negative
-    y_true = []
-    y_scores = []
+    df = pd.DataFrame(data)
+    df = df.sort_values(by="score", ascending=False)
 
-    i = 1
-    for score in data["score"]:
-        if i % 2 == 1:
-            y_true.append(1)
-        else:
-            y_true.append(0)
-        y_scores.append(score)
-        i += 1
+
+    y_scores = df["score"].to_list()
+    y_true = df["true_label"].to_list()
 
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
@@ -211,7 +188,6 @@ def overlapping_neighbors(
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
     print(Style.RESET_ALL + "")
 
-    df = pd.DataFrame(data)
-    df.to_csv(output_data_path, index=False, sep="\t")
+    df.to_csv(Path(output_data_path, "overlapping_neighbor_data.csv"), index=False, sep="\t")
 
     return (data, y_true, y_scores)

@@ -11,7 +11,6 @@ from pathlib import Path
 from tools.helper import print_progress
 
 
-
 def read_specific_columns(file_path, columns):
     try:
         with open(file_path, "r") as file:
@@ -96,79 +95,51 @@ def normalize(data):
 
 
 def degree_function(
-    go_terms: Path, output_data_path: Path, sample_size: int, G: nx.Graph
+    positive_protein_go_term_pairs: list,
+    negative_protein_go_term_pairs: list,
+    output_data_path: Path,
+    sample_size: int,
+    G: nx.Graph,
 ):
     colorama_init()
     print("-" * 65)
     print(Fore.GREEN + Back.BLACK + "degree function predictor algorithm")
     print(Style.RESET_ALL + "")
-
-    positive_protein_go_term_pairs = []
-    negative_protein_go_term_pairs = []
-    data = {
-        "protein": [],
-        "go_term": [],
-        "degree": [],
-        "score": [],
-    }
+    data = {"protein": [], "go_term": [], "degree": [], "score": [], "true_label": []}
 
     print("")
     print("Sampling Data")
-
-    total_samples = sample_size
-
-    for edge in sample(list(go_terms), total_samples):
-        positive_protein_go_term_pairs.append(edge)
-
-    temp_pairs = positive_protein_go_term_pairs.copy()
-    i = 1
-    for edge in positive_protein_go_term_pairs:
-        sample_edge = random.choice(temp_pairs)
-        temp_pairs.remove(sample_edge)
-        # removes duplicate proteins and if a protein has a corresponding edge to the GO term in the network
-        while sample_edge[0] == edge[0] and not G.has_edge(sample_edge[0], edge[1]):
-            print("Found a duplicate or has an exisitng edge")
-            temp_pairs.append(sample_edge)
-            sample_edge = random.choice(temp_pairs)
-            temp_pairs.remove(sample_edge)
-        negative_protein_go_term_pairs.append([sample_edge[0], edge[1]])
-        print_progress(i, total_samples)
-        i += 1
 
     print("")
     print("")
     print("Calculating Protein Prediction")
 
-    for positive_edge, negative_edge in zip(
-        positive_protein_go_term_pairs, negative_protein_go_term_pairs
+    for positive_protein, positive_go, negative_protein, negative_go in zip(
+        positive_protein_go_term_pairs["protein"],
+        positive_protein_go_term_pairs["go"],
+        negative_protein_go_term_pairs["protein"],
+        negative_protein_go_term_pairs["go"],
     ):
-        positive_protein = positive_edge[0]
-        negative_protein = negative_edge[0]
-        go_term = positive_edge[1]
 
         data["protein"].append(positive_protein)
-        data["go_term"].append(go_term)
+        data["go_term"].append(positive_go)
         data["degree"].append(G.degree(positive_protein))
+        data["true_label"].append(1)
+
         data["protein"].append(negative_protein)
-        data["go_term"].append(go_term)
+        data["go_term"].append(negative_go)
         data["degree"].append(G.degree(negative_protein))
+        data["true_label"].append(0)
 
     normalized_data = normalize(data["degree"])
     for item in normalized_data:
         data["score"].append(item)
 
-    # prepare for roc curve by annotating the score by postiive or negative
-    y_true = []
-    y_scores = []
+    df = pd.DataFrame(data)
+    df = df.sort_values(by="score", ascending=False)
 
-    i = 1
-    for score in data["score"]:
-        if i % 2 == 1:
-            y_true.append(1)
-        else:
-            y_true.append(0)
-        y_scores.append(score)
-        i += 1
+    y_scores = df["score"].to_list()
+    y_true = df["true_label"].to_list()
 
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
@@ -211,7 +182,6 @@ def degree_function(
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
     print(Style.RESET_ALL + "")
 
-    df = pd.DataFrame(data)
-    df.to_csv(output_data_path, index=False, sep="\t")
+    df.to_csv(Path(output_data_path, "degree_function_data.csv"), index=False, sep="\t")
 
     return data, y_true, y_scores
