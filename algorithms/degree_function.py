@@ -7,6 +7,7 @@ from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
 from tools.helper import print_progress
 
+
 def normalize(data):
     data = np.array(data)
     min_val = data.min()
@@ -33,12 +34,9 @@ def degree_function(
     data = {"protein": [], "go_term": [], "degree": [], "score": [], "true_label": []}
 
     print("")
-    print("Sampling Data")
-
-    print("")
     print("")
     print("Calculating Protein Prediction")
-
+    i = 1
     for positive_protein, positive_go, negative_protein, negative_go in zip(
         positive_protein_go_term_pairs["protein"],
         positive_protein_go_term_pairs["go"],
@@ -55,6 +53,8 @@ def degree_function(
         data["go_term"].append(negative_go)
         data["degree"].append(G.degree(negative_protein))
         data["true_label"].append(0)
+        print_progress(i, len(positive_protein_go_term_pairs["protein"]))
+        i += 1
 
     normalized_data = normalize(data["degree"])
     for item in normalized_data:
@@ -80,7 +80,7 @@ def degree_function(
 
     i = 1
     # 2. Maximize the F1 Score
-    # For each threshold, compute the F1 score
+    # # For each threshold, compute the F1 score
     f1_scores = []
     for threshold in thresholds:
         y_pred = (y_scores >= threshold).astype(int)

@@ -38,11 +38,11 @@ def overlapping_neighbors(
     evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
     """
     colorama_init()
+    print("")
     print("-" * 65)
     print(Fore.GREEN + Back.BLACK + "overlapping neighbors algorithm")
     print(Style.RESET_ALL + "")
 
-    print("")
     print("")
     print("Calculating Protein Prediction")
 
@@ -59,11 +59,14 @@ def overlapping_neighbors(
         "go_neighbor": [],
         "go_annotated_pro_pro_neighbors": [],
         "score": [],
-        "true_label": []
+        "true_label": [],
     }
     i = 1
     for positive_protein, positive_go, negative_protein, negative_go in zip(
-        positive_protein_go_term_pairs["protein"], positive_protein_go_term_pairs["go"],  negative_protein_go_term_pairs["protein"] , negative_protein_go_term_pairs["go"]
+        positive_protein_go_term_pairs["protein"],
+        positive_protein_go_term_pairs["go"],
+        negative_protein_go_term_pairs["protein"],
+        negative_protein_go_term_pairs["go"],
     ):
 
         # calculate the score for the positive set
@@ -71,8 +74,10 @@ def overlapping_neighbors(
             G, positive_protein, "protein_protein"
         )
         positive_go_neighbor = get_neighbors(G, positive_go, "protein_go_term")
-        positive_go_annotated_pro_pro_neighbor_count = get_go_annotated_pro_pro_neighbor_count(
-            G, positive_pro_pro_neighbor, positive_go
+        positive_go_annotated_pro_pro_neighbor_count = (
+            get_go_annotated_pro_pro_neighbor_count(
+                G, positive_pro_pro_neighbor, positive_go
+            )
         )
         positive_score = (1 + positive_go_annotated_pro_pro_neighbor_count) / (
             len(positive_pro_pro_neighbor) + len(positive_go_neighbor)
@@ -83,8 +88,10 @@ def overlapping_neighbors(
             G, negative_protein, "protein_protein"
         )
         negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
-        negative_go_annotated_protein_neighbor_count = get_go_annotated_pro_pro_neighbor_count(
-            G, negative_pro_pro_neighbor, negative_go
+        negative_go_annotated_protein_neighbor_count = (
+            get_go_annotated_pro_pro_neighbor_count(
+                G, negative_pro_pro_neighbor, negative_go
+            )
         )
         negative_score = (1 + negative_go_annotated_protein_neighbor_count) / (
             len(negative_pro_pro_neighbor) + len(negative_go_neighbor)
@@ -116,7 +123,6 @@ def overlapping_neighbors(
 
     df = pd.DataFrame(data)
     df = df.sort_values(by="score", ascending=False)
-
 
     y_scores = df["score"].to_list()
     y_true = df["true_label"].to_list()
@@ -163,6 +169,8 @@ def overlapping_neighbors(
     print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
     print(Style.RESET_ALL + "")
 
-    df.to_csv(Path(output_data_path, "overlapping_neighbor_data.csv"), index=False, sep="\t")
+    df.to_csv(
+        Path(output_data_path, "overlapping_neighbor_data.csv"), index=False, sep="\t"
+    )
 
     return (data, y_true, y_scores)
