@@ -1,4 +1,5 @@
 from classes.overlapping_neighbors_class import OverlappingNeighbors
+from classes.protein_degree_class import ProteinDegree
 import random
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -176,35 +177,45 @@ def main():
     overlapping_neighbors_y_score = overlapping_neighbors.y_scores
     overlapping_neighbors_y_true = overlapping_neighbors.y_true
 
-    fpr, tpr, thresholds = roc_curve(overlapping_neighbors_y_true, overlapping_neighbors_y_score)
-    roc_auc = auc(fpr, tpr)
+    protein_degree = ProteinDegree()
+
+    protein_degree.predict(positive_dataset, negative_dataset, sample_size, G, output_data_path)
+
+    protein_degree_y_score = protein_degree.y_scores
+    protein_degree_y_true = protein_degree.y_true
+
+    fpr1, tpr1, thresholds_1 = roc_curve(overlapping_neighbors_y_true, overlapping_neighbors_y_score)
+    roc_auc1 = auc(fpr1, tpr1)
+
+    fpr2, tpr2, thresholds_2 = roc_curve(protein_degree_y_true, protein_degree_y_score)
+    roc_auc2 = auc(fpr2, tpr2)
 
     print("")
     print("")
     print("Calculating optimal thresholds")
 
     # 1. Maximize the Youden’s J Statistic
-    youden_j = tpr - fpr
-    optimal_index_youden = np.argmax(youden_j)
-    optimal_threshold_youden = thresholds[optimal_index_youden]
+    youden_j_1 = tpr1 - fpr1
+    optimal_index_youden_1 = np.argmax(youden_j_1)
+    optimal_threshold_youden_1 = thresholds_1[optimal_index_youden_1]
 
     i = 1
     # 2. Maximize the F1 Score
     # For each threshold, compute the F1 score
     f1_scores = []
-    for threshold in thresholds:
+    for threshold in thresholds_1:
         y_pred = (overlapping_neighbors_y_score >= threshold).astype(int)
         f1 = f1_score(overlapping_neighbors_y_true, y_pred)
         f1_scores.append(f1)
-        print_progress(i, len(thresholds))
+        print_progress(i, len(thresholds_1))
         i += 1
     optimal_index_f1 = np.argmax(f1_scores)
-    optimal_threshold_f1 = thresholds[optimal_index_f1]
+    optimal_threshold_f1_1 = thresholds_1[optimal_index_f1]
 
     # 3. Minimize the Distance to (0, 1) on the ROC Curve
-    distances = np.sqrt((1 - tpr) ** 2 + fpr**2)
+    distances = np.sqrt((1 - tpr1) ** 2 + fpr1**2)
     optimal_index_distance = np.argmin(distances)
-    optimal_threshold_distance = thresholds[optimal_index_distance]
+    optimal_threshold_distance_1 = thresholds_1[optimal_index_distance]
 
     print("")
     print("")
@@ -213,9 +224,44 @@ def main():
     print("")
 
     # Print the optimal thresholds for each approach
-    print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden)
-    print("Optimal Threshold (F1 Score):", optimal_threshold_f1)
-    print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance)
+    print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden_1)
+    print("Optimal Threshold (F1 Score):", optimal_threshold_f1_1)
+    print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance_1)
+    print(Style.RESET_ALL + "")
+
+    # 1. Maximize the Youden’s J Statistic
+    youden_j_2 = tpr2 - fpr2
+    optimal_index_youden_2 = np.argmax(youden_j_2)
+    optimal_threshold_youden_2 = thresholds_2[optimal_index_youden_2]
+
+    i = 1
+    # 2. Maximize the F1 Score
+    # For each threshold, compute the F1 score
+    f1_scores = []
+    for threshold in thresholds_2:
+        y_pred = (protein_degree_y_score >= threshold).astype(int)
+        f1 = f1_score(protein_degree_y_true, y_pred)
+        f1_scores.append(f1)
+        print_progress(i, len(thresholds_2))
+        i += 1
+    optimal_index_f2 = np.argmax(f1_scores)
+    optimal_threshold_f2 = thresholds_2[optimal_index_f2]
+
+    # 3. Minimize the Distance to (0, 1) on the ROC Curve
+    distances = np.sqrt((1 - tpr2) ** 2 + fpr2**2)
+    optimal_index_distance = np.argmin(distances)
+    optimal_threshold_distance_2 = thresholds_2[optimal_index_distance]
+
+    print("")
+    print("")
+    print("-" * 65)
+    print("Results")
+    print("")
+
+    # Print the optimal thresholds for each approach
+    print(Fore.YELLOW + "Optimal Threshold (Youden's J):", optimal_threshold_youden_2)
+    print("Optimal Threshold (F1 Score):", optimal_threshold_f2)
+    print("Optimal Threshold (Min Distance to (0,1)):", optimal_threshold_distance_2)
     print(Style.RESET_ALL + "")
 
     # Compute ROC curve and ROC area for the first classifier
@@ -231,6 +277,19 @@ def main():
     )
     pr_auc1 = auc(recall1, precision1)
 
+    # Compute ROC curve and ROC area for the second classifier
+    fpr2, tpr2, thresholds2 = roc_curve(
+        protein_degree_y_true, protein_degree_y_score
+    )
+    roc_auc2 = auc(fpr2, tpr2)
+
+
+    # Compute precision-recall curve and area under the curve for the second classifier
+    precision2, recall2, thresholds2 = precision_recall_curve(
+        protein_degree_y_true, protein_degree_y_score
+    )
+    pr_auc2 = auc(recall1, precision1)
+
     # Plot ROC Curve for both classifiers
     plt.figure()
     plt.plot(
@@ -239,6 +298,13 @@ def main():
         color="darkorange",
         lw=2,
         label="Overlapping Neighbors (area = %0.2f)" % roc_auc1,
+    )
+    plt.plot(
+        fpr2,
+        tpr2,
+        color="purple",
+        lw=2,
+        label="Protein Degree (area = %0.2f)" % roc_auc2,
     )
     plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--")
 
@@ -258,6 +324,13 @@ def main():
         color="darkorange",
         lw=2,
         label="Overlapping Neighbor (area = %0.2f)" % pr_auc1,
+    )
+    plt.plot(
+        recall2,
+        precision2,
+        color="purple",
+        lw=2,
+        label="Protein Degree (area = %0.2f)" % pr_auc2,
     )
     plt.xlabel("Recall")
     plt.ylabel("Precision")
