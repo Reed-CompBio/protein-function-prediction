@@ -26,7 +26,6 @@ class ProteinDegree(BaseAlgorithm):
         self,
         positive_data_set,
         negative_data_set,
-        sample_size,
         G: nx.graph,
         output_path,
     ):
@@ -34,7 +33,13 @@ class ProteinDegree(BaseAlgorithm):
         print("-" * 65)
         print(Fore.GREEN + Back.BLACK + "degree function predictor algorithm")
         print(Style.RESET_ALL + "")
-        data = {"protein": [], "go_term": [], "degree": [], "score": [], "true_label": []}
+        data = {
+            "protein": [],
+            "go_term": [],
+            "degree": [],
+            "score": [],
+            "true_label": [],
+        }
 
         print("")
         print("")
@@ -66,9 +71,15 @@ class ProteinDegree(BaseAlgorithm):
         df = pd.DataFrame(data)
         df = df.sort_values(by="score", ascending=False)
 
-        self.y_scores = df["score"].to_list()
-        self.y_true = df["true_label"].to_list()
+        df.to_csv(
+            Path(output_path, "protein_degree_data.csv"),
+            index=False,
+            sep="\t",
+        )
 
+
+        self.y_score = df["score"].to_list()
+        self.y_true = df["true_label"].to_list()
 
 
 def normalize(data):
@@ -81,4 +92,3 @@ def normalize(data):
 
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
-

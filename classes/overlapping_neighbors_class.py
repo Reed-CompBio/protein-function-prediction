@@ -18,7 +18,6 @@ class OverlappingNeighbors(BaseAlgorithm):
         self,
         positive_data_set,
         negative_data_set,
-        sample_size,
         G: nx.graph,
         output_path,
     ):
@@ -106,7 +105,7 @@ class OverlappingNeighbors(BaseAlgorithm):
             data["score"].append(negative_score)
             data["true_label"].append(0)
 
-            print_progress(i, sample_size)
+            print_progress(i, len(positive_data_set["protein"]))
             i += 1
 
         df = pd.DataFrame(data)
@@ -118,7 +117,7 @@ class OverlappingNeighbors(BaseAlgorithm):
             sep="\t",
         )
 
-        self.y_scores = df["score"].to_list()
+        self.y_score = df["score"].to_list()
         self.y_true = df["true_label"].to_list()
 
 
