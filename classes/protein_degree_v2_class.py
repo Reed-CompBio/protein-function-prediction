@@ -5,10 +5,10 @@ import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
-from tools.helper import print_progress, normalize
+from tools.helper import print_progress, normalize, get_neighbors
 
 
-class ProteinDegree(BaseAlgorithm):
+class ProteinDegreeV2(BaseAlgorithm):
     def __init__(self):
         self.y_score = []
         self.y_true = []
@@ -45,12 +45,12 @@ class ProteinDegree(BaseAlgorithm):
 
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
-            data["degree"].append(G.degree(positive_protein))
+            data["degree"].append(len(get_neighbors(G, positive_protein, "protein_protein")))
             data["true_label"].append(1)
 
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
-            data["degree"].append(G.degree(negative_protein))
+            data["degree"].append(len(get_neighbors(G, negative_protein, "protein_protein")))
             data["true_label"].append(0)
             print_progress(i, len(positive_data_set["protein"]))
             i += 1

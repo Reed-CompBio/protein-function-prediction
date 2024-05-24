@@ -7,7 +7,7 @@ from pathlib import Path
 from tools.helper import print_progress, normalize
 
 
-class OverlappingNeighbors(BaseAlgorithm):
+class OverlappingNeighborsV3(BaseAlgorithm):
     def __init__(self):
         self.y_score = []
         self.y_true = []
@@ -47,7 +47,6 @@ class OverlappingNeighbors(BaseAlgorithm):
             "norm_score": [],
             "true_label": [],
         }
-        i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
             positive_data_set["protein"],
             positive_data_set["go"],
@@ -65,23 +64,23 @@ class OverlappingNeighbors(BaseAlgorithm):
                     G, positive_pro_pro_neighbor, positive_go
                 )
             )
-            positive_score = (1 + positive_go_annotated_pro_pro_neighbor_count) / (
-                len(positive_pro_pro_neighbor) + len(positive_go_neighbor)
-            )
+            positive_score = positive_go_annotated_pro_pro_neighbor_count + (
+                1 + positive_go_annotated_pro_pro_neighbor_count
+            ) / (len(positive_go_neighbor))
 
             # calculate the score for the negative set
             negative_pro_pro_neighbor = get_neighbors(
                 G, negative_protein, "protein_protein"
             )
             negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
-            negative_go_annotated_protein_neighbor_count = (
+            negative_go_annotated_pro_pro_neighbor_count = (
                 get_go_annotated_pro_pro_neighbor_count(
                     G, negative_pro_pro_neighbor, negative_go
                 )
             )
-            negative_score = (1 + negative_go_annotated_protein_neighbor_count) / (
-                len(negative_pro_pro_neighbor) + len(negative_go_neighbor)
-            )
+            negative_score = negative_go_annotated_pro_pro_neighbor_count + (
+                1 + negative_go_annotated_pro_pro_neighbor_count
+            ) / (len(negative_go_neighbor))
 
             # input positive and negative score to data
             data["protein"].append(positive_protein)
@@ -99,13 +98,10 @@ class OverlappingNeighbors(BaseAlgorithm):
             data["pro_pro_neighbor"].append(len(negative_pro_pro_neighbor))
             data["go_neighbor"].append(len(negative_go_neighbor))
             data["go_annotated_pro_pro_neighbors"].append(
-                negative_go_annotated_protein_neighbor_count
+                negative_go_annotated_pro_pro_neighbor_count
             )
             data["score"].append(negative_score)
             data["true_label"].append(0)
-
-            print_progress(i, len(positive_data_set["protein"]))
-            i += 1
 
         normalized_data = normalize(data["score"])
         for item in normalized_data:
@@ -114,13 +110,7 @@ class OverlappingNeighbors(BaseAlgorithm):
         df = pd.DataFrame(data)
         df = df.sort_values(by="norm_score", ascending=False)
 
-        df.to_csv(
-            Path(output_path, "overlapping_neighbor_data.csv"),
-            index=False,
-            sep="\t",
-        )
-
-        self.y_score = df["score"].to_list()
+        self.y_score = df["norm_score"].to_list()
         self.y_true = df["true_label"].to_list()
 
 

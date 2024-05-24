@@ -1,6 +1,7 @@
 from colorama import Fore, Style
 import networkx as nx
 import random
+import numpy as np
 
 
 def print_progress(current, total, bar_length=65):
@@ -109,3 +110,25 @@ def generate_random_colors(num_colors):
         color = (random.random(), random.random(), random.random())
         colors.append(color)
     return colors
+
+
+def normalize(data):
+    data = np.array(data)
+    min_val = data.min()
+    max_val = data.max()
+
+    if min_val == max_val:
+        return np.zeros_like(data)
+
+    normalized_data = (data - min_val) / (max_val - min_val)
+    return normalized_data.tolist()
+
+def get_neighbors(G: nx.Graph, node, edgeType):
+    res = G.edges(node, data=True)
+    neighbors = []
+    for edge in res:
+        if edge[2]["type"] == edgeType:
+            neighborNode = [edge[1], edge[2]]
+            neighbors.append(neighborNode)
+
+    return neighbors

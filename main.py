@@ -1,5 +1,10 @@
 from classes.overlapping_neighbors_class import OverlappingNeighbors
+from classes.overlapping_neighbors_v2_class import OverlappingNeighborsV2
+from classes.overlapping_neighbors_v3_class import OverlappingNeighborsV3
 from classes.protein_degree_class import ProteinDegree
+from classes.protein_degree_v2_class import ProteinDegreeV2
+from classes.protein_degree_v3_class import ProteinDegreeV3
+
 import random
 import matplotlib.pyplot as plt
 from random import sample
@@ -36,7 +41,7 @@ def main():
     go_association_path = Path("./network/fly_proGo.csv")
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
-    sample_size = 10
+    sample_size = 5000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
@@ -87,7 +92,11 @@ def main():
     # Define algorithm classes and their names
     algorithm_classes = {
         "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
         "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
     }
 
     results = run_workflow(
@@ -128,7 +137,7 @@ def main():
 
     # Generate ROC and PR figures to compare methods
 
-    colors = generate_random_colors(2)
+    colors = generate_random_colors(len(algorithm_classes))
     i = 0
     plt.figure()
     for algorithm_name, metrics in results.items():
