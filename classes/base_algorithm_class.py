@@ -1,9 +1,15 @@
-class BaseAlgorithm:
+from abc import ABC, abstractmethod
+from typing import Any
+
+
+# this is the class that all algorithms need to inherit
+class BaseAlgorithm(ABC):
+    # two attributes that each algorithm must have
     def __init__(self):
         self.y_true = None
         self.y_score = None
 
-    def predict(
-        self, positive_data_set, negative_data_set, sample_size, graph, output_path
-    ):
-        raise NotImplementedError("Predict method must be implemented in subclass")
+    # a method that each algorithm must have
+    @abstractmethod
+    def predict(self):
+        pass

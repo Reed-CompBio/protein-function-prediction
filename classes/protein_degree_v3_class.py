@@ -5,7 +5,7 @@ import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
-from tools.helper import print_progress, normalize, get_neighbors
+from tools.helper import normalize, get_neighbors, print_progress
 
 
 class ProteinDegreeV3(BaseAlgorithm):
@@ -20,10 +20,6 @@ class ProteinDegreeV3(BaseAlgorithm):
         G: nx.graph,
         output_path,
     ):
-        colorama_init()
-        print("-" * 65)
-        print(Fore.GREEN + Back.BLACK + "degree function predictor algorithm")
-        print(Style.RESET_ALL + "")
         data = {
             "protein": [],
             "go_term": [],
@@ -31,10 +27,6 @@ class ProteinDegreeV3(BaseAlgorithm):
             "norm_score": [],
             "true_label": [],
         }
-
-        print("")
-        print("")
-        print("Calculating Protein Prediction")
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
             positive_data_set["protein"],
@@ -45,12 +37,16 @@ class ProteinDegreeV3(BaseAlgorithm):
 
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
-            data["degree"].append(len(get_neighbors(G, positive_protein, "protein_go_term")))
+            data["degree"].append(
+                len(get_neighbors(G, positive_protein, "protein_go_term"))
+            )
             data["true_label"].append(1)
 
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
-            data["degree"].append(len(get_neighbors(G, negative_protein, "protein_go_term")))
+            data["degree"].append(
+                len(get_neighbors(G, negative_protein, "protein_go_term"))
+            )
             data["true_label"].append(0)
             print_progress(i, len(positive_data_set["protein"]))
             i += 1

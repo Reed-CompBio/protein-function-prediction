@@ -1,10 +1,7 @@
 from classes.base_algorithm_class import BaseAlgorithm
 import networkx as nx
 import pandas as pd
-from colorama import init as colorama_init
-from colorama import Fore, Back, Style
-from pathlib import Path
-from tools.helper import print_progress, normalize
+from tools.helper import normalize, print_progress
 
 
 class OverlappingNeighborsV2(BaseAlgorithm):
@@ -22,14 +19,6 @@ class OverlappingNeighborsV2(BaseAlgorithm):
         """
         evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
         """
-        colorama_init()
-        print("")
-        print("-" * 65)
-        print(Fore.GREEN + Back.BLACK + "overlapping neighbors algorithm")
-        print(Style.RESET_ALL + "")
-
-        print("")
-        print("Calculating Protein Prediction")
 
         # have two sets of positive and negative protein-go_term pairs
         # for each pair, calculate the score of how well they predict whether a protein should be annotated to a GO term.
@@ -47,6 +36,7 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             "norm_score": [],
             "true_label": [],
         }
+        i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
             positive_data_set["protein"],
             positive_data_set["go"],
@@ -106,6 +96,9 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             )
             data["score"].append(negative_score)
             data["true_label"].append(0)
+
+            print_progress(i, len(positive_data_set["protein"]))
+            i += 1
 
         normalized_data = normalize(data["score"])
         for item in normalized_data:
