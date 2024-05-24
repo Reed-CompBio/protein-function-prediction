@@ -81,7 +81,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     print("total edge count: ", len(G.edges()))
     print("total node count: ", len(G.nodes()))
 
-    return G, protein_list, go_term_list
+    return G, protein_list
 
 
 def read_specific_columns(file_path, columns, delimit):
@@ -123,6 +123,7 @@ def normalize(data):
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
 
+
 def get_neighbors(G: nx.Graph, node, edgeType):
     res = G.edges(node, data=True)
     neighbors = []
@@ -132,3 +133,11 @@ def get_neighbors(G: nx.Graph, node, edgeType):
             neighbors.append(neighborNode)
 
     return neighbors
+
+
+def add_print_statements(filename, statements):
+    # Open the file in append mode (will create the file if it doesn't exist)
+    with open(filename, "w") as file:
+        for statement in statements:
+            # Write each statement to the file
+            file.write(f"{statement}\n")

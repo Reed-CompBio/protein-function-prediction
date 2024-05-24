@@ -23,7 +23,6 @@ class SampleAlgorithm(BaseAlgorithm):
         """
         evaluate a random approach method on a protein protein interaction network with go term annotation.
         """
-        colorama_init()
         # initialize an objext that will hold the prediction data
         data = {
             "protein": [],
