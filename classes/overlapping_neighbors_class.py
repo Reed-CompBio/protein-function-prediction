@@ -23,13 +23,6 @@ class OverlappingNeighbors(BaseAlgorithm):
         evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
         """
         colorama_init()
-        print("")
-        print("-" * 65)
-        print(Fore.GREEN + Back.BLACK + "overlapping neighbors algorithm")
-        print(Style.RESET_ALL + "")
-
-        print("")
-        print("Calculating Protein Prediction")
 
         # have two sets of positive and negative protein-go_term pairs
         # for each pair, calculate the score of how well they predict whether a protein should be annotated to a GO term.
@@ -120,7 +113,7 @@ class OverlappingNeighbors(BaseAlgorithm):
             sep="\t",
         )
 
-        self.y_score = df["score"].to_list()
+        self.y_score = df["norm_score"].to_list()
         self.y_true = df["true_label"].to_list()
 
 

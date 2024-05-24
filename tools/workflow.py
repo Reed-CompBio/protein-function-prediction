@@ -1,16 +1,24 @@
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
+from tools.helper import print_progress, normalize
 
 
 def run_workflow(
     algorithm_classes, positive_dataset, negative_dataset, G, output_data_path
 ):
+    print("")
+    print("-" * 65)
+    print("Calculating Protein Prediction")
     results = {}
+    i = 1
     for algorithm_name, algorithm_class in algorithm_classes.items():
+        print("")
+        print(f"{i} / {len(algorithm_classes)}: {algorithm_name} algorithm")
         current = run_algorithm(
             algorithm_class, positive_dataset, negative_dataset, G, output_data_path
         )
         current = run_metrics(current)
         results[algorithm_name] = current
+        i+=1
     return results
 
 

@@ -4,6 +4,7 @@ from classes.overlapping_neighbors_v3_class import OverlappingNeighborsV3
 from classes.protein_degree_class import ProteinDegree
 from classes.protein_degree_v2_class import ProteinDegreeV2
 from classes.protein_degree_v3_class import ProteinDegreeV3
+from classes.sample_algorithm import SampleAlgorithm
 
 import random
 import matplotlib.pyplot as plt
@@ -21,13 +22,13 @@ from tools.helper import (
     create_ppi_network,
     read_specific_columns,
     generate_random_colors,
+    print_progress
 )
 from tools.workflow import run_workflow
 
 
 def main():
     colorama_init()
-    print("Starting workflow")
     if not os.path.exists("output"):
         os.makedirs("output")
     if not os.path.exists("output/data"):
@@ -41,7 +42,7 @@ def main():
     go_association_path = Path("./network/fly_proGo.csv")
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
-    sample_size = 5000
+    sample_size = 250000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
@@ -92,11 +93,12 @@ def main():
     # Define algorithm classes and their names
     algorithm_classes = {
         "OverlappingNeighbors": OverlappingNeighbors,
-        "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        "ProteinDegree": ProteinDegree,
-        "ProteinDegreeV2": ProteinDegreeV2,
-        "ProteinDegreeV3": ProteinDegreeV3,
+        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        # "ProteinDegree": ProteinDegree,
+        # "ProteinDegreeV2": ProteinDegreeV2,
+        # "ProteinDegreeV3": ProteinDegreeV3,
+        # "SampleAlgorithm": SampleAlgorithm
     }
 
     results = run_workflow(
@@ -106,7 +108,7 @@ def main():
     # Calculate thresholding for each method w/ three threshold metrics
     for algorithm_name, metrics in results.items():
         print("")
-        print(f"Calculating optimal thresholds: {algorithm_name}")
+        # print(f"Calculating optimal thresholds: {algorithm_name}")
         # 1. Maximize the Youden’s J Statistic
         youden_j = metrics["tpr"] - metrics["fpr"]
         optimal_index_youden = np.argmax(youden_j)
@@ -120,6 +122,7 @@ def main():
             y_pred = (metrics["y_score"] >= threshold).astype(int)
             f1 = f1_score(metrics["y_true"], y_pred)
             f1_scores.append(f1)
+            # print_progress(i, len(metrics["thresholds"]))
             i += 1
         optimal_index_f1 = np.argmax(f1_scores)
         optimal_threshold_f1 = metrics["thresholds"][optimal_index_f1]
