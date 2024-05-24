@@ -1,10 +1,8 @@
 from classes.base_algorithm_class import BaseAlgorithm
 import networkx as nx
 import pandas as pd
-import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
-from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
 from tools.helper import print_progress
 

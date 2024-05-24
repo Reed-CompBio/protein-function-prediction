@@ -4,15 +4,6 @@ import pandas as pd
 import numpy as np
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
-from sklearn.metrics import roc_curve, auc, f1_score
-from pathlib import Path
-from tools.helper import print_progress
-import networkx as nx
-import pandas as pd
-import numpy as np
-from colorama import init as colorama_init
-from colorama import Fore, Back, Style
-from sklearn.metrics import roc_curve, auc, f1_score
 from pathlib import Path
 from tools.helper import print_progress
 
@@ -76,7 +67,6 @@ class ProteinDegree(BaseAlgorithm):
             index=False,
             sep="\t",
         )
-
 
         self.y_score = df["score"].to_list()
         self.y_true = df["true_label"].to_list()
