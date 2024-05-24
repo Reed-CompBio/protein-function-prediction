@@ -123,7 +123,6 @@ def normalize(data):
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
 
-
 def get_neighbors(G: nx.Graph, node, edgeType):
     res = G.edges(node, data=True)
     neighbors = []

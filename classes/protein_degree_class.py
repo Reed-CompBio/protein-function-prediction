@@ -21,7 +21,6 @@ class ProteinDegree(BaseAlgorithm):
         output_path,
     ):
         colorama_init()
-
         data = {
             "protein": [],
             "go_term": [],

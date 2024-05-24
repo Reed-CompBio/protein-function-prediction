@@ -19,7 +19,6 @@ class ProteinDegreeV2(BaseAlgorithm):
         G: nx.graph,
         output_path,
     ):
-
         data = {
             "protein": [],
             "go_term": [],
