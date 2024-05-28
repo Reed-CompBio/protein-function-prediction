@@ -39,7 +39,7 @@ def main():
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     input_directory_path = Path("./input")
-    sample_size = 100
+    sample_size = 1000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")

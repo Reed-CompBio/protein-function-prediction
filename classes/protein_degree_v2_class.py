@@ -58,7 +58,7 @@ class ProteinDegreeV2(BaseAlgorithm):
         df = df.sort_values(by="norm_score", ascending=False)
 
         df.to_csv(
-            Path(output_path, "protein_degree_data.csv"),
+            Path(output_path, "protein_degree_v2_data.csv"),
             index=False,
             sep="\t",
         )

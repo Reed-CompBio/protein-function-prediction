@@ -2,6 +2,7 @@ from classes.base_algorithm_class import BaseAlgorithm
 import networkx as nx
 import pandas as pd
 from tools.helper import normalize, print_progress
+from pathlib import Path
 
 
 class OverlappingNeighborsV2(BaseAlgorithm):
@@ -106,6 +107,12 @@ class OverlappingNeighborsV2(BaseAlgorithm):
 
         df = pd.DataFrame(data)
         df = df.sort_values(by="norm_score", ascending=False)
+
+        df.to_csv(
+            Path(output_path, "overlapping_neighbor_v2_data.csv"),
+            index=False,
+            sep="\t",
+        )
 
         self.y_score = df["norm_score"].to_list()
         self.y_true = df["true_label"].to_list()
