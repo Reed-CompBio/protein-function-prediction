@@ -4,8 +4,9 @@ import pandas as pd
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
-from tools.helper import print_progress, normalize
+from tools.helper import print_progress, normalize, import_graph_from_pickle
 import random
+from tools.workflow import get_datasets
 
 
 class SampleAlgorithm(BaseAlgorithm):
@@ -15,9 +16,8 @@ class SampleAlgorithm(BaseAlgorithm):
 
     def predict(
         self,
-        positive_data_set,
-        negative_data_set,
-        G: nx.graph,
+        input_directory_path,
+        graph_file_path,
         output_data_directory,
     ):
         """
@@ -32,13 +32,16 @@ class SampleAlgorithm(BaseAlgorithm):
             "true_label": [],
         }
 
+        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        G = import_graph_from_pickle(graph_file_path)
+
         i = 1
         # iterate through the positive and negative dataset and calculate the method's prediction score
         for positive_protein, positive_go, negative_protein, negative_go in zip(
-            positive_data_set["protein"],
-            positive_data_set["go"],
-            negative_data_set["protein"],
-            negative_data_set["go"],
+            positive_dataset["protein"],
+            positive_dataset["go"],
+            negative_dataset["protein"],
+            negative_dataset["go"],
         ):
             # prediction logic for the positive and negative data set entry
             positive_score = random.random()
@@ -55,7 +58,7 @@ class SampleAlgorithm(BaseAlgorithm):
             data["go_term"].append(negative_go)
             data["score"].append(negative_score)
             data["true_label"].append(0)
-            print_progress(i, len(positive_data_set["protein"]))
+            print_progress(i, len(positive_dataset["protein"]))
             i += 1
 
         # need to normalise the data

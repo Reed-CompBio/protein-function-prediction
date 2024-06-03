@@ -12,9 +12,8 @@ import pandas as pd
 
 def run_workflow(
     algorithm_classes,
-    positive_dataset,
-    negative_dataset,
-    G,
+    input_directory_path,
+    graph_file_path,
     output_data_path,
     output_image_path,
 ):
@@ -27,7 +26,7 @@ def run_workflow(
         print("")
         print(f"{i} / {len(algorithm_classes)}: {algorithm_name} Algorithm")
         current = run_algorithm(
-            algorithm_class, positive_dataset, negative_dataset, G, output_data_path
+            algorithm_class, input_directory_path, graph_file_path, output_data_path
         )
         current = run_metrics(current)
         results[algorithm_name] = current
@@ -42,16 +41,15 @@ def run_workflow(
 
 def run_algorithm(
     algorithm_class,
-    positive_dataset,
-    negative_dataset,
-    G,
+    input_directory_path,
+    graph_file_path,
     output_data_path,
 ):
     # Create an instance of the algorithm class
     algorithm = algorithm_class()
 
     # Predict using the algorithm
-    algorithm.predict(positive_dataset, negative_dataset, G, output_data_path)
+    algorithm.predict(input_directory_path, graph_file_path, output_data_path)
 
     # Access y_true and y_score attributes for evaluation
     y_true = algorithm.y_true
@@ -208,5 +206,31 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
         index=False,
         sep="\t",
     )
+
+    return positive_dataset, negative_dataset
+
+
+def get_datasets(input_directory_path):
+    positive_dataset = {"protein": [], "go": []}
+    negative_dataset = {"protein": [], "go": []}
+    with open(
+        Path(input_directory_path, "negative_protein_go_term_pairs.csv"), "r"
+    ) as file:
+        next(file)
+        for line in file:
+            parts = line.strip().split("\t")
+            # print(parts[0])
+            positive_dataset["protein"].append(parts[0])
+            positive_dataset["go"].append(parts[1])
+
+    with open(
+        Path(input_directory_path, "positive_protein_go_term_pairs.csv"), "r"
+    ) as file:
+        next(file)
+        for line in file:
+            parts = line.strip().split("\t")
+            # print(parts[0])
+            negative_dataset["protein"].append(parts[0])
+            negative_dataset["go"].append(parts[1])
 
     return positive_dataset, negative_dataset
