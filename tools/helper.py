@@ -2,6 +2,7 @@ from colorama import Fore, Style
 import networkx as nx
 import random
 import numpy as np
+import pickle
 
 
 def print_progress(current, total, bar_length=65):
@@ -123,6 +124,7 @@ def normalize(data):
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
 
+
 def get_neighbors(G: nx.Graph, node, edgeType):
     res = G.edges(node, data=True)
     neighbors = []
@@ -140,3 +142,13 @@ def add_print_statements(filename, statements):
         for statement in statements:
             # Write each statement to the file
             file.write(f"{statement}\n")
+
+
+def export_graph_to_pickle(graph, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(graph, f)
+
+
+def import_graph_from_pickle(filename):
+    with open(filename, 'rb') as f:
+        return pickle.load(f)

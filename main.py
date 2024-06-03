@@ -5,10 +5,6 @@ from classes.protein_degree_class import ProteinDegree
 from classes.protein_degree_v2_class import ProteinDegreeV2
 from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
-from classes.test_class import TestClass
-
-
-import random
 import matplotlib.pyplot as plt
 from random import sample
 from pathlib import Path
@@ -21,6 +17,7 @@ from tools.helper import (
     create_ppi_network,
     read_specific_columns,
     print_progress,
+    export_graph_to_pickle,
 )
 from tools.workflow import run_workflow, sample_data
 
@@ -29,18 +26,19 @@ def main():
     colorama_init()
     if not os.path.exists("output"):
         os.makedirs("output")
+    if not os.path.exists("output/dataset"):
+        os.makedirs("output/dataset")
     if not os.path.exists("output/data"):
         os.makedirs("output/data")
     if not os.path.exists("output/images"):
         os.makedirs("output/images")
-    if not os.path.exists("input"):
-        os.makedirs("input")
 
     interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
     go_association_path = Path("./network/fly_proGo.csv")
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
-    input_directory_path = Path("./input")
+    dataset_directory_path = Path("./output/dataset")
+    graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 1000
 
     interactome_columns = [0, 1, 4, 5]
@@ -55,8 +53,10 @@ def main():
 
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
 
+    export_graph_to_pickle(G, graph_file_path)
+
     positive_dataset, negative_dataset = sample_data(
-        go_protein_pairs, sample_size, protein_list, G, input_directory_path
+        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
     )
 
     # Define algorithm classes and their names
@@ -68,13 +68,12 @@ def main():
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
         "SampleAlgorithm": SampleAlgorithm,
-        # "TestClass": TestClass,
     }
 
     results = run_workflow(
         algorithm_classes,
-        input_directory_path,
-        G,
+        dataset_directory_path,
+        graph_file_path,
         output_data_path,
         output_image_path,
     )

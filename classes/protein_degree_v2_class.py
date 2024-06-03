@@ -4,7 +4,12 @@ import pandas as pd
 import numpy as np
 from colorama import Fore, Back, Style
 from pathlib import Path
-from tools.helper import normalize, get_neighbors, print_progress
+from tools.helper import (
+    normalize,
+    get_neighbors,
+    print_progress,
+    import_graph_from_pickle,
+)
 from tools.workflow import get_datasets
 
 
@@ -16,7 +21,7 @@ class ProteinDegreeV2(BaseAlgorithm):
     def predict(
         self,
         input_directory_path,
-        G: nx.graph,
+        graph_file_path,
         output_path,
     ):
         data = {
@@ -28,6 +33,7 @@ class ProteinDegreeV2(BaseAlgorithm):
         }
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        G = import_graph_from_pickle(graph_file_path)
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
             positive_dataset["protein"],

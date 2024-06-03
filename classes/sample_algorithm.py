@@ -4,7 +4,7 @@ import pandas as pd
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
-from tools.helper import print_progress, normalize
+from tools.helper import print_progress, normalize, import_graph_from_pickle
 import random
 from tools.workflow import get_datasets
 
@@ -17,7 +17,7 @@ class SampleAlgorithm(BaseAlgorithm):
     def predict(
         self,
         input_directory_path,
-        G: nx.graph,
+        graph_file_path,
         output_data_directory,
     ):
         """
@@ -33,6 +33,7 @@ class SampleAlgorithm(BaseAlgorithm):
         }
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        G = import_graph_from_pickle(graph_file_path)
 
         i = 1
         # iterate through the positive and negative dataset and calculate the method's prediction score

@@ -4,7 +4,7 @@ import pandas as pd
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
-from tools.helper import print_progress, normalize
+from tools.helper import print_progress, normalize, import_graph_from_pickle
 from tools.workflow import get_datasets
 
 
@@ -16,7 +16,7 @@ class OverlappingNeighbors(BaseAlgorithm):
     def predict(
         self,
         input_directory_path,
-        G: nx.graph,
+        graph_file_path,
         output_path,
     ):
         """
@@ -42,6 +42,7 @@ class OverlappingNeighbors(BaseAlgorithm):
         }
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        G = import_graph_from_pickle(graph_file_path)
 
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(

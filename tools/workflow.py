@@ -13,7 +13,7 @@ import pandas as pd
 def run_workflow(
     algorithm_classes,
     input_directory_path,
-    G,
+    graph_file_path,
     output_data_path,
     output_image_path,
 ):
@@ -26,7 +26,7 @@ def run_workflow(
         print("")
         print(f"{i} / {len(algorithm_classes)}: {algorithm_name} Algorithm")
         current = run_algorithm(
-            algorithm_class, input_directory_path, G, output_data_path
+            algorithm_class, input_directory_path, graph_file_path, output_data_path
         )
         current = run_metrics(current)
         results[algorithm_name] = current
@@ -42,14 +42,14 @@ def run_workflow(
 def run_algorithm(
     algorithm_class,
     input_directory_path,
-    G,
+    graph_file_path,
     output_data_path,
 ):
     # Create an instance of the algorithm class
     algorithm = algorithm_class()
 
     # Predict using the algorithm
-    algorithm.predict(input_directory_path, G, output_data_path)
+    algorithm.predict(input_directory_path, graph_file_path, output_data_path)
 
     # Access y_true and y_score attributes for evaluation
     y_true = algorithm.y_true

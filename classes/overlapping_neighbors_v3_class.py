@@ -1,7 +1,7 @@
 from classes.base_algorithm_class import BaseAlgorithm
 import networkx as nx
 import pandas as pd
-from tools.helper import normalize, print_progress
+from tools.helper import normalize, print_progress, import_graph_from_pickle
 from pathlib import Path
 from tools.workflow import get_datasets
 
@@ -14,7 +14,7 @@ class OverlappingNeighborsV3(BaseAlgorithm):
     def predict(
         self,
         input_directory_path,
-        G: nx.graph,
+        graph_file_path,
         output_path,
     ):
         """
@@ -40,6 +40,7 @@ class OverlappingNeighborsV3(BaseAlgorithm):
         i = 1
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        G = import_graph_from_pickle(graph_file_path)
 
         for positive_protein, positive_go, negative_protein, negative_go in zip(
             positive_dataset["protein"],
