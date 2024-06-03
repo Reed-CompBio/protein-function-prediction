@@ -104,7 +104,7 @@ class OverlappingNeighborsV3(BaseAlgorithm):
         df = df.sort_values(by="norm_score", ascending=False)
 
         df.to_csv(
-            Path(output_path, "overlapping_neighbor_v2_data.csv"),
+            Path(output_path, "overlapping_neighbor_v3_data.csv"),
             index=False,
             sep="\t",
         )
