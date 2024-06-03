@@ -5,6 +5,8 @@ from classes.protein_degree_class import ProteinDegree
 from classes.protein_degree_v2_class import ProteinDegreeV2
 from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
+from classes.test_class import TestClass
+
 
 import random
 import matplotlib.pyplot as plt
@@ -66,12 +68,12 @@ def main():
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
         "SampleAlgorithm": SampleAlgorithm,
+        # "TestClass": TestClass,
     }
 
     results = run_workflow(
         algorithm_classes,
-        positive_dataset,
-        negative_dataset,
+        input_directory_path,
         G,
         output_data_path,
         output_image_path,

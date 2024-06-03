@@ -6,6 +6,7 @@ from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
 from tools.helper import print_progress, normalize
+from tools.workflow import get_datasets
 
 
 class ProteinDegree(BaseAlgorithm):
@@ -15,8 +16,7 @@ class ProteinDegree(BaseAlgorithm):
 
     def predict(
         self,
-        positive_data_set,
-        negative_data_set,
+        input_directory_path,
         G: nx.graph,
         output_path,
     ):
@@ -28,12 +28,15 @@ class ProteinDegree(BaseAlgorithm):
             "norm_score": [],
             "true_label": [],
         }
+
+        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
-            positive_data_set["protein"],
-            positive_data_set["go"],
-            negative_data_set["protein"],
-            negative_data_set["go"],
+            positive_dataset["protein"],
+            positive_dataset["go"],
+            negative_dataset["protein"],
+            negative_dataset["go"],
         ):
 
             data["protein"].append(positive_protein)
@@ -45,7 +48,7 @@ class ProteinDegree(BaseAlgorithm):
             data["go_term"].append(negative_go)
             data["degree"].append(G.degree(negative_protein))
             data["true_label"].append(0)
-            print_progress(i, len(positive_data_set["protein"]))
+            print_progress(i, len(positive_dataset["protein"]))
             i += 1
 
         normalized_data = normalize(data["degree"])

@@ -3,6 +3,7 @@ import networkx as nx
 import pandas as pd
 from tools.helper import normalize, print_progress
 from pathlib import Path
+from tools.workflow import get_datasets
 
 
 class OverlappingNeighborsV2(BaseAlgorithm):
@@ -12,8 +13,7 @@ class OverlappingNeighborsV2(BaseAlgorithm):
 
     def predict(
         self,
-        positive_data_set,
-        negative_data_set,
+        input_directory_path,
         G: nx.graph,
         output_path,
     ):
@@ -37,12 +37,14 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             "norm_score": [],
             "true_label": [],
         }
+
+        positive_dataset, negative_dataset = get_datasets(input_directory_path)
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
-            positive_data_set["protein"],
-            positive_data_set["go"],
-            negative_data_set["protein"],
-            negative_data_set["go"],
+            positive_dataset["protein"],
+            positive_dataset["go"],
+            negative_dataset["protein"],
+            negative_dataset["go"],
         ):
 
             # calculate the score for the positive set
@@ -98,7 +100,7 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             data["score"].append(negative_score)
             data["true_label"].append(0)
 
-            print_progress(i, len(positive_data_set["protein"]))
+            print_progress(i, len(positive_dataset["protein"]))
             i += 1
 
         normalized_data = normalize(data["score"])
