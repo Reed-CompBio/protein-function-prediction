@@ -39,7 +39,7 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 1000
+    sample_size = 10000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
@@ -62,12 +62,12 @@ def main():
     # Define algorithm classes and their names
     algorithm_classes = {
         "OverlappingNeighbors": OverlappingNeighbors,
-        "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        "ProteinDegree": ProteinDegree,
-        "ProteinDegreeV2": ProteinDegreeV2,
-        "ProteinDegreeV3": ProteinDegreeV3,
-        "SampleAlgorithm": SampleAlgorithm,
+        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        # "ProteinDegree": ProteinDegree,
+        # "ProteinDegreeV2": ProteinDegreeV2,
+        # "ProteinDegreeV3": ProteinDegreeV3,
+        # "SampleAlgorithm": SampleAlgorithm,
     }
 
     results = run_workflow(

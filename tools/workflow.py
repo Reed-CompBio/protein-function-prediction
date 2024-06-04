@@ -49,11 +49,11 @@ def run_algorithm(
     algorithm = algorithm_class()
 
     # Predict using the algorithm
-    algorithm.predict(input_directory_path, graph_file_path, output_data_path)
+    y_score, y_true = algorithm.predict(input_directory_path, graph_file_path, output_data_path)
 
     # Access y_true and y_score attributes for evaluation
-    y_true = algorithm.y_true
-    y_score = algorithm.y_score
+    algorithm.set_y_score(y_score)
+    algorithm.set_y_true(y_true)
 
     results = {"y_true": y_true, "y_score": y_score}
 
