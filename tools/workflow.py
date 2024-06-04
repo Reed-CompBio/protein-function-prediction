@@ -93,18 +93,18 @@ def run_thresholds(results, algorithm_classes, output_data_path):
         optimal_index_youden = np.argmax(youden_j)
         optimal_threshold_youden = metrics["thresholds"][optimal_index_youden]
 
-        i = 1
-        # 2. Maximize the F1 Score
-        # For each threshold, compute the F1 score
-        f1_scores = []
-        for threshold in metrics["thresholds"]:
-            y_pred = (metrics["y_score"] >= threshold).astype(int)
-            f1 = f1_score(metrics["y_true"], y_pred)
-            f1_scores.append(f1)
-            print_progress(i, len(metrics["thresholds"]))
-            i += 1
-        optimal_index_f1 = np.argmax(f1_scores)
-        optimal_threshold_f1 = metrics["thresholds"][optimal_index_f1]
+        # i = 1
+        # # 2. Maximize the F1 Score
+        # # For each threshold, compute the F1 score
+        # f1_scores = []
+        # for threshold in metrics["thresholds"]:
+        #     y_pred = (metrics["y_score"] >= threshold).astype(int)
+        #     f1 = f1_score(metrics["y_true"], y_pred)
+        #     f1_scores.append(f1)
+        #     print_progress(i, len(metrics["thresholds"]))
+        #     i += 1
+        # optimal_index_f1 = np.argmax(f1_scores)
+        # optimal_threshold_f1 = metrics["thresholds"][optimal_index_f1]
 
         # 3. Minimize the Distance to (0, 1) on the ROC Curve
         distances = np.sqrt((1 - metrics["tpr"]) ** 2 + metrics["fpr"] ** 2)
@@ -115,9 +115,9 @@ def run_thresholds(results, algorithm_classes, output_data_path):
         threshold_results.append(
             f"Optimal Threshold (Youden's J): {optimal_threshold_youden}"
         )
-        threshold_results.append(
-            f"Optimal Threshold (F1 Score): {optimal_threshold_f1}"
-        )
+        # threshold_results.append(
+        #     f"Optimal Threshold (F1 Score): {optimal_threshold_f1}"
+        # )
         threshold_results.append(
             f"Optimal Threshold (Min Distance to (0,1)): {optimal_threshold_distance}"
         )
@@ -214,7 +214,7 @@ def get_datasets(input_directory_path):
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
     with open(
-        Path(input_directory_path, "negative_protein_go_term_pairs.csv"), "r"
+        Path(input_directory_path, "positive_protein_go_term_pairs.csv"), "r"
     ) as file:
         next(file)
         for line in file:
@@ -224,7 +224,7 @@ def get_datasets(input_directory_path):
             positive_dataset["go"].append(parts[1])
 
     with open(
-        Path(input_directory_path, "positive_protein_go_term_pairs.csv"), "r"
+        Path(input_directory_path, "negative_protein_go_term_pairs.csv"), "r"
     ) as file:
         next(file)
         for line in file:
