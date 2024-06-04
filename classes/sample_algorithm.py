@@ -14,6 +14,18 @@ class SampleAlgorithm(BaseAlgorithm):
         self.y_score = []
         self.y_true = []
 
+    def get_y_score(self):
+        return self.y_score
+
+    def get_y_true(self):
+        return self.y_true
+
+    def set_y_score(self, y_score):
+        self.y_score = y_score
+
+    def set_y_true(self, y_true):
+        self.y_true = y_true
+
     def predict(
         self,
         input_directory_path,
@@ -78,5 +90,7 @@ class SampleAlgorithm(BaseAlgorithm):
         )
 
         # ALWAYS set the class attribute variables to the norm_score and true_label
-        self.y_score = df["norm_score"].to_list()
-        self.y_true = df["true_label"].to_list()
+        y_score = df["norm_score"].to_list()
+        y_true = df["true_label"].to_list()
+
+        return y_score, y_true
