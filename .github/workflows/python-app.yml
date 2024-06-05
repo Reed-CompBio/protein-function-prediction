@@ -19,14 +19,13 @@ jobs:
         shell: bash -el {0}
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          activate-environment: protein-prediction
-          environment-file: environment.yml
-          python-version: 3.12.3
-          auto-activate-base: false
-          channels: conda-forge,defaults, gurobi
-
+    - uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: protein-prediction
+        environment-file: environment.yml
+        python-version: 3.8  # Correct the Python version here
+        auto-activate-base: false
+        channels: conda-forge, defaults
       - run: |
           conda info
           conda list
