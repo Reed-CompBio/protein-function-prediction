@@ -23,8 +23,10 @@ jobs:
         with:
           activate-environment: protein-prediction
           environment-file: environment.yml
-          python-version: 3.12.3 
+          python-version: 3.12.3
           auto-activate-base: false
+          channels: conda-forge,defaults, gurobi
+
       - run: |
           conda info
           conda list
