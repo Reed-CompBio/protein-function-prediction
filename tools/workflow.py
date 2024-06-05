@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import random
 from random import sample
 import pandas as pd
+from operator import itemgetter
 
 
 def run_workflow(
@@ -16,6 +17,8 @@ def run_workflow(
     graph_file_path,
     output_data_path,
     output_image_path,
+    threshold,
+    figures,
 ):
     print("")
     print("-" * 65)
@@ -32,9 +35,10 @@ def run_workflow(
         results[algorithm_name] = current
         i += 1
 
-    run_thresholds(results, algorithm_classes, output_data_path)
-
-    generate_figures(algorithm_classes, results, output_image_path)
+    if threshold:
+        run_thresholds(results, algorithm_classes, output_data_path)
+        if figures:
+            generate_figures(algorithm_classes, results, output_image_path)
 
     return results
 
@@ -49,11 +53,13 @@ def run_algorithm(
     algorithm = algorithm_class()
 
     # Predict using the algorithm
-    algorithm.predict(input_directory_path, graph_file_path, output_data_path)
+    y_score, y_true = algorithm.predict(
+        input_directory_path, graph_file_path, output_data_path
+    )
 
     # Access y_true and y_score attributes for evaluation
-    y_true = algorithm.y_true
-    y_score = algorithm.y_score
+    algorithm.set_y_score(y_score)
+    algorithm.set_y_true(y_true)
 
     results = {"y_true": y_true, "y_score": y_score}
 
@@ -133,9 +139,11 @@ def generate_figures(algorithm_classes, results, output_image_path):
     # Generate ROC and PR figures to compare methods
 
     colors = generate_random_colors(len(algorithm_classes))
+
+    sorted_results = sort_results_by(results, "roc_auc")
     i = 0
     plt.figure()
-    for algorithm_name, metrics in results.items():
+    for algorithm_name, metrics in sorted_results.items():
         plt.plot(
             metrics["fpr"],
             metrics["tpr"],
@@ -154,9 +162,10 @@ def generate_figures(algorithm_classes, results, output_image_path):
     plt.savefig(Path(output_image_path, "multiple_roc_curves.png"))
     plt.show()
 
+    sorted_results = sort_results_by(results, "pr_auc")
     i = 0
     plt.figure()
-    for algorithm_name, metrics in results.items():
+    for algorithm_name, metrics in sorted_results.items():
         plt.plot(
             metrics["recall"],
             metrics["precision"],
@@ -234,3 +243,18 @@ def get_datasets(input_directory_path):
             negative_dataset["go"].append(parts[1])
 
     return positive_dataset, negative_dataset
+
+
+def sort_results_by(results, key):
+    algorithm_tuple_list = []
+
+    # make a list of tuples where a tuple is (algorithm_name, the metric we will be sorting by)
+    for algorithm_name, metrics in results.items():
+        algorithm_tuple_list.append((algorithm_name, metrics[key]))
+
+    algorithm_tuple_list = sorted(algorithm_tuple_list, key=itemgetter(1), reverse=True)
+
+    sorted_results = {}
+    for algorithm in algorithm_tuple_list:
+        sorted_results[algorithm[0]] = results[algorithm[0]]
+    return sorted_results
