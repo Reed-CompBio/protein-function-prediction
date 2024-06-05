@@ -141,11 +141,9 @@ def generate_figures(algorithm_classes, results, output_image_path):
     colors = generate_random_colors(len(algorithm_classes))
 
     sorted_results = sort_results_by(results, "roc_auc")
-    print("ROC")
     i = 0
     plt.figure()
     for algorithm_name, metrics in sorted_results.items():
-        print(algorithm_name, metrics["roc_auc"])
         plt.plot(
             metrics["fpr"],
             metrics["tpr"],
@@ -165,11 +163,9 @@ def generate_figures(algorithm_classes, results, output_image_path):
     plt.show()
 
     sorted_results = sort_results_by(results, "pr_auc")
-    print("PR")
     i = 0
     plt.figure()
     for algorithm_name, metrics in sorted_results.items():
-        print(algorithm_name, metrics["pr_auc"])
         plt.plot(
             metrics["recall"],
             metrics["precision"],

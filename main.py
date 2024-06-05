@@ -51,11 +51,11 @@ def main():
 
     protein_list = []
 
-    #if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
+    # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
     # G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     # export_graph_to_pickle(G, graph_file_path)
 
-    #if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
+    # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
     # positive_dataset, negative_dataset = sample_data(
     #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
     # )
