@@ -11,25 +11,20 @@ on:
       - master
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
+  example-3:
+    name: Ex3 Linux
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
-    - name: Check out the code
-      uses: actions/checkout@v3
-
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        auto-update-conda: true
-        python-version: 3.12.3   # Change this to your desired Python version
-        environment-file: environment.yml
-        activate-environment: protein-prediction  # Name of your conda environment as specified in environment.yml
-
-    - name: Install dependencies
-      run: conda env update --file environment.yml --name protein-prediction
-
-    - name: Run tests
-      run: |
-        source activate myenv
-        pytest
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: protein-prediction
+          environment-file: environment.yml
+          python-version: 3.12.3 
+          auto-activate-base: false
+      - run: |
+          conda info
+          conda list
