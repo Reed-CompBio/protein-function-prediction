@@ -2,7 +2,6 @@ name: protein-prediction
 channels:
   - conda-forge
   - defaults
-  - https://conda.anaconda.org/gurobi
 dependencies:
   - brotli=1.1.0=h0dc2134_1
   - brotli-bin=1.1.0=h0dc2134_1
