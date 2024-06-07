@@ -1,51 +1,57 @@
-name: Python application test with Conda
+name: Python package
 
-on:
-  push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
+on: [push, pull_request]
 
 jobs:
-  # example-3:
-  #   name: Ex3 Linux
-  #   runs-on: "ubuntu-latest"
-  #   defaults:
-  #     run:
-  #       shell: bash -el {0}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: conda-incubator/setup-miniconda@v3
-  #       with:
-  #         activate-environment: protein-prediction
-  #         environment-file: environment.yml
-  #         python-version: 3.8  # Correct the Python version here
-  #         auto-activate-base: false
-  #         channels: conda-forge, defaults
-  #     - run: |
-  #         conda info
-  #         conda list
-  conda-only:
-    name: Test conda environment
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
+  test:
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Install conda environment
-        uses: conda-incubator/setup-miniconda@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          activate-environment: protein-prediction
-          environment-file: environment.yml
-          auto-activate-base: false
-          miniconda-version: "latest"
-      # Log conda environment contents
-      - name: Log conda environment
-        shell: bash --login {0}
-        run: conda list
+          python-version: "3.12.3" # Specify the version of Python to use
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-
+
+      - name: Install Miniconda
+        shell: bash
+        run: |
+          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda config --set always_yes yes --set changeps1 no
+          conda config --add pkgs_dirs ~/conda_pkgs_dir
+          conda update -q conda
+
+      - name: Create and activate conda environment
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda env create -f environment.yml
+          conda activate protein-prediction
+        env:
+          CONDA_PKGS_DIRS: ~/conda_pkgs_dir
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda activate protein-prediction
+          pip install pytest
+
+      - name: Run tests
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda activate protein-prediction
+          pytest
