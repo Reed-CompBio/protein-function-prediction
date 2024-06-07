@@ -58,35 +58,65 @@ def main():
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     export_graph_to_pickle(G, graph_file_path)
 
-    # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    positive_dataset, negative_dataset = sample_data(
-        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    )
-
     # Define algorithm classes and their names
     algorithm_classes = {
-        # "OverlappingNeighbors": OverlappingNeighbors,
-        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        # "ProteinDegree": ProteinDegree,
-        # "ProteinDegreeV2": ProteinDegreeV2,
-        # "ProteinDegreeV3": ProteinDegreeV3,
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
     }
+    
+    x = 20
+    print_graphs = False
+    auc = {}
+    #index 0 is ROC, index 1 is Precision Recall
+    for i in algorithm_classes.keys():
+        auc[i] = [0,0]
 
-    results = run_workflow(
-        algorithm_classes,
-        dataset_directory_path,
-        graph_file_path,
-        output_data_path,
-        output_image_path,
-        True,
-        True,
+    for i in range(x): #Creates a pos/neg list each replicate then runs workflow like normal
+        print("\n\nReplicate: " + str(i) + "\n")
+    
+        # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
+        positive_dataset, negative_dataset = sample_data(
+            go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+        )
+    
+        results = run_workflow(
+            algorithm_classes,
+            dataset_directory_path,
+            graph_file_path,
+            output_data_path,
+            output_image_path,
+            True,
+            print_graphs,
+        )
+
+        #each loop as the roc and pr auc to total for each algorithm
+        for i in algorithm_classes.keys():
+            auc[i][0] += results[i]['roc_auc']
+            auc[i][1] += results[i]['pr_auc']
+
+    #Averages values using number of replicates
+    for i in auc.keys():
+        auc[i][0] = auc[i][0]/x
+        auc[i][1] = auc[i][1]/x
+
+    #Fix output, prints the roc and pr table, then saves to .csv file 
+    df = pd.DataFrame.from_dict(auc, orient = 'index', columns = ['ROC', 'Precision/Recall'])
+    print()
+    print(df)
+    df.to_csv(
+        Path(output_data_path, "auc_values.csv"),
+        index=True,
+        sep="\t",
     )
-
+    
     sys.exit()
 
 

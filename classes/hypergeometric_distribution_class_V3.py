@@ -34,7 +34,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
     ):
         """
         Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of 
-        interest and a GO term.
+        interest and a GO term. V3 includes the protein of interest in calculations. 
         """
         colorama_init()
 
