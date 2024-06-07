@@ -33,6 +33,12 @@ jobs:
           conda config --add pkgs_dirs ~/conda_pkgs_dir
           conda update -q conda
 
+      - name: Add conda channels
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda config --add channels conda-forge
+
       - name: Create and activate conda environment
         shell: bash
         run: |
@@ -42,12 +48,12 @@ jobs:
         env:
           CONDA_PKGS_DIRS: ~/conda_pkgs_dir
 
-      - name: Install dependencies
+      - name: Check Python version
         shell: bash
         run: |
           source "$HOME/miniconda/etc/profile.d/conda.sh"
           conda activate protein-prediction
-          pip install pytest
+          python --version
 
       - name: Run tests
         shell: bash
