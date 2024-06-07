@@ -30,22 +30,22 @@ jobs:
   #         conda info
   #         conda list
   conda-only:
-  name: Test conda environment
-  runs-on: ${{ matrix.os }}
-  strategy:
-    matrix:
-      os: [macos-latest, windows-latest]
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    - name: Install conda environment
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        activate-environment: protein-prediction
-        environment-file: environment.yml
-        auto-activate-base: false
-        miniconda-version: "latest"
-    # Log conda environment contents
-    - name: Log conda environment
-      shell: bash --login {0}
-      run: conda list
+    name: Test conda environment
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install conda environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: protein-prediction
+          environment-file: environment.yml
+          auto-activate-base: false
+          miniconda-version: "latest"
+      # Log conda environment contents
+      - name: Log conda environment
+        shell: bash --login {0}
+        run: conda list
