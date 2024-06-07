@@ -1,0 +1,63 @@
+name: Python package
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.12.3" # Specify the version of Python to use
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-
+
+      - name: Install Miniconda
+        shell: bash
+        run: |
+          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda config --set always_yes yes --set changeps1 no
+          conda config --add pkgs_dirs ~/conda_pkgs_dir
+          conda update -q conda
+
+      - name: Add conda channels
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda config --add channels conda-forge
+
+      - name: Create and activate conda environment
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda env create -f environment.yml
+          conda activate protein-prediction
+        env:
+          CONDA_PKGS_DIRS: ~/conda_pkgs_dir
+
+      - name: Check Python version
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda activate protein-prediction
+          python --version
+
+      - name: Run tests
+        shell: bash
+        run: |
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda activate protein-prediction
+          pytest

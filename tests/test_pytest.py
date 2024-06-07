@@ -14,6 +14,8 @@ from tools.helper import (
     import_graph_from_pickle,
 )
 from tools.workflow import run_workflow
+import os
+
 
 
 def test_algorithm_attributes():
@@ -47,6 +49,15 @@ def test_algorithm_inherits_class():
 
 
 def test_algorithm_workflow():
+    if not os.path.exists("output"):
+        os.makedirs("output")
+    if not os.path.exists("output/dataset"):
+        os.makedirs("output/dataset")
+    if not os.path.exists("output/data"):
+        os.makedirs("output/data")
+    if not os.path.exists("output/images"):
+        os.makedirs("output/images")
+
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     input_directory_path = Path("./tests/testing-dataset/")
