@@ -42,7 +42,7 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 10000
+    sample_size = 1000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")

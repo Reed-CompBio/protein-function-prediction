@@ -42,7 +42,7 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 10000
+    sample_size = 1000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
@@ -58,11 +58,6 @@ def main():
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     export_graph_to_pickle(G, graph_file_path)
 
-    # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    positive_dataset, negative_dataset = sample_data(
-        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    )
-
     # Define algorithm classes and their names
     algorithm_classes = {
         # "OverlappingNeighbors": OverlappingNeighbors,
@@ -76,17 +71,34 @@ def main():
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
     }
+    
+    x = 10
+    auc = {}
+    #index 0 is ROC, index 1 is Precision Recall
+    for i in algorithm_classes.keys():
+        auc[i] = [0,0]
 
-    results = run_workflow(
-        algorithm_classes,
-        dataset_directory_path,
-        graph_file_path,
-        output_data_path,
-        output_image_path,
-        True,
-        True,
-    )
-
+    for i in range(x): #Creates a pos/neg list each replicate then runs workflow like normal
+        print("\n\nReplicate: " + str(i) + "\n")
+    
+        # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
+        positive_dataset, negative_dataset = sample_data(
+            go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+        )
+    
+       
+    
+        results = run_workflow(
+            algorithm_classes,
+            dataset_directory_path,
+            graph_file_path,
+            output_data_path,
+            output_image_path,
+            True,
+            True,
+        )
+        
+    
     sys.exit()
 
 
