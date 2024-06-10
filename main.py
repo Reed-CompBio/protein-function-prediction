@@ -8,6 +8,7 @@ from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
 from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
+from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
 import matplotlib.pyplot as plt
 from random import sample
 from pathlib import Path
@@ -42,7 +43,7 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 10000
+    sample_size = 1000
 
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
@@ -55,26 +56,27 @@ def main():
     protein_list = []
 
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
-    G, protein_list = create_ppi_network(interactome, go_protein_pairs)
-    export_graph_to_pickle(G, graph_file_path)
+    # G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+    # export_graph_to_pickle(G, graph_file_path)
 
     # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    positive_dataset, negative_dataset = sample_data(
-        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    )
+    # positive_dataset, negative_dataset = sample_data(
+    #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+    # )
 
     # Define algorithm classes and their names
     algorithm_classes = {
-        # "OverlappingNeighbors": OverlappingNeighbors,
-        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        # "ProteinDegree": ProteinDegree,
-        # "ProteinDegreeV2": ProteinDegreeV2,
-        # "ProteinDegreeV3": ProteinDegreeV3,
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
+        "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
 
     results = run_workflow(

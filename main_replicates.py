@@ -8,6 +8,8 @@ from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
 from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
+from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
+
 import matplotlib.pyplot as plt
 from random import sample
 from pathlib import Path
@@ -15,6 +17,7 @@ from tools.helper import print_progress
 import os
 import sys
 import pandas as pd
+import statistics as stat
 from colorama import init as colorama_init
 from tools.helper import (
     create_ppi_network,
@@ -70,14 +73,15 @@ def main():
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
+        "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
     
-    x = 20
+    x = 20 #Number of replicates
     print_graphs = False
     auc = {}
     #index 0 is ROC, index 1 is Precision Recall
     for i in algorithm_classes.keys():
-        auc[i] = [0,0]
+        auc[i] = [[],[]]
 
     for i in range(x): #Creates a pos/neg list each replicate then runs workflow like normal
         print("\n\nReplicate: " + str(i) + "\n")
@@ -97,18 +101,21 @@ def main():
             print_graphs,
         )
 
-        #each loop as the roc and pr auc to total for each algorithm
+        #each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
         for i in algorithm_classes.keys():
-            auc[i][0] += results[i]['roc_auc']
-            auc[i][1] += results[i]['pr_auc']
+            auc[i][0].append(results[i]['roc_auc'])
+            auc[i][1].append(results[i]['pr_auc'])
 
-    #Averages values using number of replicates
+    #Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
     for i in auc.keys():
-        auc[i][0] = auc[i][0]/x
-        auc[i][1] = auc[i][1]/x
+        meanROC = round(stat.mean(auc[i][0]),5)
+        auc[i].append(round(stat.mean(auc[i][1]),5))
+        auc[i].append(round(stat.stdev(auc[i][1]),5))
+        auc[i][1] = round(stat.stdev(auc[i][0]),5)
+        auc[i][0] = meanROC
 
-    #Fix output, prints the roc and pr table, then saves to .csv file 
-    df = pd.DataFrame.from_dict(auc, orient = 'index', columns = ['ROC', 'Precision/Recall'])
+    #Prints the roc and pr table, then saves to .csv file 
+    df = pd.DataFrame.from_dict(auc, orient = 'index', columns = ['ROC mean', 'ROC sd', 'Precision/Recall mean', 'Precision/Recall sd'])
     print()
     print(df)
     df.to_csv(

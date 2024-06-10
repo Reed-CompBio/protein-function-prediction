@@ -34,7 +34,7 @@ class HypergeometricDistribution(BaseAlgorithm):
     ):
         """
         Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of 
-        interest and a GO term.
+        interest and a GO term. Does not include protein of interest in calculations.
         """
         colorama_init()
 
@@ -42,7 +42,6 @@ class HypergeometricDistribution(BaseAlgorithm):
         # for each pair, calculate the score of how well they predict whether a protein should be annotated to a GO term.
         # 50% of the data are proteins that are annotated to a GO term
         # 50% of the data are proteins that are not annotated to a GO term
-        # score equation (1 + number of ProProNeighbor that are annotated to the go term) / (number of ProProNeighbor + number of GoNeighbor)
 
         data = {
             "protein": [],
@@ -79,9 +78,10 @@ class HypergeometricDistribution(BaseAlgorithm):
             
             N = len([x for x,y in G.nodes(data=True) if y['type']=="protein"]) #Total number of protein nodes in the entire graph
             pos_n = len(positive_pro_pro_neighbor) #Number of protein neighbors the protein of interest has
-            K = len(positive_go_neighbor) #Number of protein neighbors the GO term of interest has, same for pos & neg
+            K = len(positive_go_neighbor) - 1 #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
             pos_k = positive_go_annotated_pro_pro_neighbor_count #The overlap between the GO protein neighbors and protein neighbors of the protein of interest
-            
+
+            #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
             positive_score = 1 - ((math.comb(K,pos_k)*math.comb(N-K,pos_n-pos_k))/math.comb(N,pos_n))
 
             # calculate the score for the negative set
