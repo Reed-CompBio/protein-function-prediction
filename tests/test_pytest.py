@@ -77,6 +77,10 @@ def test_algorithm_workflow():
         "ProteinDegree": 0.825,
         "ProteinDegreeV2": 0.675,
         "ProteinDegreeV3": 0.89,
+        "HypergeometricDistribution": 0.78,
+        "HypergeometricDistributionV2": 0.89,
+        "HypergeometricDistributionV3": 0.675,
+        "HypergeometricDistributionV4": 0.6
     }
 
     pr_results = {
@@ -87,6 +91,10 @@ def test_algorithm_workflow():
         "ProteinDegreeV2": 0.6367757242757243,
         "OverlappingNeighbors": 0.5329058916229968,
         "SampleAlgorithm": 0.4093791854859966,
+        "HypergeometricDistribution": 0.7899246806,
+        "HypergeometricDistributionV2": 0.8519169719,
+        "HypergeometricDistributionV3": 0.7142573629,
+        "HypergeometricDistributionV4": 0.6967847007,
     }
 
     for algorithm, metrics in results.items():

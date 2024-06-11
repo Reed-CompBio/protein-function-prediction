@@ -9,6 +9,7 @@ from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
 from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
 from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
+
 import matplotlib.pyplot as plt
 from random import sample
 from pathlib import Path
@@ -45,6 +46,11 @@ def main():
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 1000
 
+    testing_output_data_path = Path("./output/data/")
+    testing_output_image_path = Path("./output/images/")
+    testing_input_directory_path = Path("./tests/testing-dataset/")
+    testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
+    
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
 
@@ -81,10 +87,10 @@ def main():
 
     results = run_workflow(
         algorithm_classes,
-        dataset_directory_path,
-        graph_file_path,
-        output_data_path,
-        output_image_path,
+        testing_input_directory_path,
+        testing_graph_file_path,
+        testing_output_data_path,
+        testing_output_image_path,
         True,
         True,
     )
