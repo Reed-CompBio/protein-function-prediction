@@ -132,7 +132,7 @@ class HypergeometricDistributionV2(BaseAlgorithm):
         df = df.sort_values(by="norm_score", ascending=False)
 
         df.to_csv(
-            Path(output_path, "hypergeometricdistributionV3.csv"),
+            Path(output_path, "hypergeometric_distribution_V2.csv"),
             index=False,
             sep="\t",
         )

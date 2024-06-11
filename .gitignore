@@ -46,3 +46,5 @@ env/
 
 output/
 input/
+
+.ipynb_checkpoints

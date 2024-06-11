@@ -38,7 +38,7 @@ def run_workflow(
     if threshold:
         run_thresholds(results, algorithm_classes, output_data_path)
         if figures:
-            generate_figures(algorithm_classes, results, output_image_path)
+            generate_figures(algorithm_classes, results, output_image_path, output_data_path)
 
     return results
 
@@ -135,12 +135,12 @@ def run_thresholds(results, algorithm_classes, output_data_path):
     )
 
 
-def generate_figures(algorithm_classes, results, output_image_path):
+def generate_figures(algorithm_classes, results, output_image_path, output_data_path):
     # Generate ROC and PR figures to compare methods
 
     colors = generate_random_colors(len(algorithm_classes))
 
-    sorted_results = sort_results_by(results, "roc_auc")
+    sorted_results = sort_results_by(results, "roc_auc", output_data_path)
     i = 0
     plt.figure()
     for algorithm_name, metrics in sorted_results.items():
@@ -162,7 +162,7 @@ def generate_figures(algorithm_classes, results, output_image_path):
     plt.savefig(Path(output_image_path, "multiple_roc_curves.png"))
     plt.show()
 
-    sorted_results = sort_results_by(results, "pr_auc")
+    sorted_results = sort_results_by(results, "pr_auc", output_data_path)
     i = 0
     plt.figure()
     for algorithm_name, metrics in sorted_results.items():
@@ -245,12 +245,25 @@ def get_datasets(input_directory_path):
     return positive_dataset, negative_dataset
 
 
-def sort_results_by(results, key):
+def sort_results_by(results, key, output_path):
     algorithm_tuple_list = []
+    data = {"algorithm" : [], key: []}
+    output_file_path = Path(output_path, key + "_results.csv")
 
     # make a list of tuples where a tuple is (algorithm_name, the metric we will be sorting by)
     for algorithm_name, metrics in results.items():
         algorithm_tuple_list.append((algorithm_name, metrics[key]))
+        data["algorithm"].append(algorithm_name)
+        data[key].append(metrics[key])
+
+    df = pd.DataFrame(data)
+    df = df.sort_values(by=key, ascending=False)
+
+    df.to_csv(
+        output_file_path,
+        index=False,
+        sep="\t",
+    )
 
     algorithm_tuple_list = sorted(algorithm_tuple_list, key=itemgetter(1), reverse=True)
 
