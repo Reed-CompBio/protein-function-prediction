@@ -38,47 +38,52 @@ def main():
     if not os.path.exists("output/images"):
         os.makedirs("output/images")
 
-    interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_association_path = Path("./network/fly_proGo.csv")
+    fly_interactome_path = Path("./network/fly_propro.csv")
+    fly_go_association_path = Path("./network/fly_proGo.csv")
+    zfish_interactome_path = Path("./network/zfish_propro.csv")
+    zfish_go_association_path = Path("./network/zfish_proGo.csv")
+    bsub_interactome_path = Path("./network/bsub_propro.csv")
+    bsub_go_association_path = Path("./network/bsub_proGo.csv")
+
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 1000
+    sample_size = 10000
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
     testing_input_directory_path = Path("./tests/testing-dataset/")
     testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
     
-    interactome_columns = [0, 1, 4, 5]
-    interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
+    interactome_columns = [0, 1]
+    interactome = read_specific_columns(zfish_interactome_path, interactome_columns, ",")
 
     go_inferred_columns = [0, 2]
     go_protein_pairs = read_specific_columns(
-        go_association_path, go_inferred_columns, ","
+        zfish_go_association_path, go_inferred_columns, ","
     )
 
     protein_list = []
 
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
-    # G, protein_list = create_ppi_network(interactome, go_protein_pairs)
-    # export_graph_to_pickle(G, graph_file_path)
+    G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+    export_graph_to_pickle(G, graph_file_path)
 
     # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    # positive_dataset, negative_dataset = sample_data(
-    #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    # )
+    positive_dataset, negative_dataset = sample_data(
+        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+    )
 
     # Define algorithm classes and their names
     algorithm_classes = {
-        "OverlappingNeighbors": OverlappingNeighbors,
-        "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        "ProteinDegree": ProteinDegree,
-        "ProteinDegreeV2": ProteinDegreeV2,
-        "ProteinDegreeV3": ProteinDegreeV3,
-        "SampleAlgorithm": SampleAlgorithm,
+        # "OverlappingNeighbors": OverlappingNeighbors,
+        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        # "ProteinDegree": ProteinDegree,
+        # "ProteinDegreeV2": ProteinDegreeV2,
+        # "ProteinDegreeV3": ProteinDegreeV3,
+        # "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
@@ -87,10 +92,10 @@ def main():
 
     results = run_workflow(
         algorithm_classes,
-        testing_input_directory_path,
-        testing_graph_file_path,
-        testing_output_data_path,
-        testing_output_image_path,
+        dataset_directory_path,
+        graph_file_path,
+        output_data_path,
+        output_image_path,
         True,
         True,
     )

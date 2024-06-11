@@ -39,17 +39,17 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
     # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
     for line in fly_interactome:
-        if not G.has_node(line[2]):
-            G.add_node(line[2], name=line[0], type="protein")
-            protein_list.append({"id": line[2], "name": line[0]})
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
 
-        if not G.has_node(line[3]):
-            G.add_node(line[3], name=line[1], type="protein")
-            protein_list.append({"id": line[3], "name": line[1]})
+        if not G.has_node(line[1]):
+            G.add_node(line[1], name=line[1], type="protein")
+            protein_list.append({"id": line[1], "name": line[1]})
             protein_node += 1
 
-        G.add_edge(line[2], line[3], type="protein_protein")
+        G.add_edge(line[0], line[1], type="protein_protein")
         protein_protein_edge += 1
         print_progress(i, total_progress)
         i += 1
