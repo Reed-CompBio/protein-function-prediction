@@ -40,7 +40,7 @@ def main():
         os.makedirs("output/images")
 
     interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_association_path = Path("./network/fly_proGo.csv")
+    go_association_path = Path("./network/gene_association.fb") #fly_proGo.csv, gene_association does not have inferred edges
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
@@ -50,9 +50,9 @@ def main():
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
 
-    go_inferred_columns = [0, 2]
+    go_inferred_columns = [1, 4]  #[0, 2] for fly_proGo.csv
     go_protein_pairs = read_specific_columns(
-        go_association_path, go_inferred_columns, ","
+        go_association_path, go_inferred_columns, "\t"
     )
 
     protein_list = []
@@ -75,22 +75,24 @@ def main():
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
         "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
-    
-    x = 20 #Number of replicates
+
+    x = 20  # Number of replicates
     print_graphs = False
     auc = {}
-    #index 0 is ROC, index 1 is Precision Recall
+    # index 0 is ROC, index 1 is Precision Recall
     for i in algorithm_classes.keys():
-        auc[i] = [[],[]]
+        auc[i] = [[], []]
 
-    for i in range(x): #Creates a pos/neg list each replicate then runs workflow like normal
+    for i in range(
+        x
+    ):  # Creates a pos/neg list each replicate then runs workflow like normal
         print("\n\nReplicate: " + str(i) + "\n")
-    
-        # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
+
+        # requires new positive/negative dataset to be made each replicate
         positive_dataset, negative_dataset = sample_data(
             go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
         )
-    
+
         results = run_workflow(
             algorithm_classes,
             dataset_directory_path,
@@ -101,29 +103,33 @@ def main():
             print_graphs,
         )
 
-        #each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
+        # each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
         for i in algorithm_classes.keys():
-            auc[i][0].append(results[i]['roc_auc'])
-            auc[i][1].append(results[i]['pr_auc'])
+            auc[i][0].append(results[i]["roc_auc"])
+            auc[i][1].append(results[i]["pr_auc"])
 
-    #Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
+    # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
     for i in auc.keys():
-        meanROC = round(stat.mean(auc[i][0]),5)
-        auc[i].append(round(stat.mean(auc[i][1]),5))
-        auc[i].append(round(stat.stdev(auc[i][1]),5))
-        auc[i][1] = round(stat.stdev(auc[i][0]),5)
+        meanROC = round(stat.mean(auc[i][0]), 5)
+        auc[i].append(round(stat.mean(auc[i][1]), 5))
+        auc[i].append(round(stat.stdev(auc[i][1]), 5))
+        auc[i][1] = round(stat.stdev(auc[i][0]), 5)
         auc[i][0] = meanROC
 
-    #Prints the roc and pr table, then saves to .csv file 
-    df = pd.DataFrame.from_dict(auc, orient = 'index', columns = ['ROC mean', 'ROC sd', 'Precision/Recall mean', 'Precision/Recall sd'])
+    # Prints the roc and pr table, then saves to .csv file
+    df = pd.DataFrame.from_dict(
+        auc,
+        orient="index",
+        columns=["ROC mean", "ROC sd", "Precision/Recall mean", "Precision/Recall sd"],
+    )
     print()
     print(df)
     df.to_csv(
-        Path(output_data_path, "auc_values.csv"),
+        Path(output_data_path, "auc_values_no_inferred_edges.csv"),
         index=True,
         sep="\t",
     )
-    
+
     sys.exit()
 
 

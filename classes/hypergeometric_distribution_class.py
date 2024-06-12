@@ -34,7 +34,7 @@ class HypergeometricDistribution(BaseAlgorithm):
     ):
         """
         Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of 
-        interest and a GO term. Does not include protein of interest in calculations.
+        interest and a GO term. Edge removed between positive protein and go term.
         """
         colorama_init()
 
@@ -53,7 +53,7 @@ class HypergeometricDistribution(BaseAlgorithm):
             "norm_score": [],
             "true_label": [],
         }
-
+        
         positive_dataset, negative_dataset = get_datasets(input_directory_path)
         G = import_graph_from_pickle(graph_file_path)
 
@@ -64,7 +64,7 @@ class HypergeometricDistribution(BaseAlgorithm):
             negative_dataset["protein"],
             negative_dataset["go"],
         ):
-
+            G.remove_edge(positive_protein, positive_go)
             # calculate the score for the positive set
             positive_pro_pro_neighbor = get_neighbors(
                 G, positive_protein, "protein_protein"
@@ -78,7 +78,7 @@ class HypergeometricDistribution(BaseAlgorithm):
             
             N = len([x for x,y in G.nodes(data=True) if y['type']=="protein"]) #Total number of protein nodes in the entire graph
             pos_n = len(positive_pro_pro_neighbor) #Number of protein neighbors the protein of interest has
-            K = len(positive_go_neighbor) - 1 #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
+            K = len(positive_go_neighbor) #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest
             pos_k = positive_go_annotated_pro_pro_neighbor_count #The overlap between the GO protein neighbors and protein neighbors of the protein of interest
 
             #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
@@ -122,6 +122,7 @@ class HypergeometricDistribution(BaseAlgorithm):
             data["true_label"].append(0)
 
             print_progress(i, len(positive_dataset["protein"]))
+            G.add_edge(positive_protein, positive_go, type = "protein_go_term")
             i += 1
 
         normalized_data = normalize(data["score"])

@@ -40,7 +40,7 @@ def main():
         os.makedirs("output/images")
 
     interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_association_path = Path("./network/fly_proGo.csv")
+    go_association_path = Path("./network/gene_association.fb") #fly_proGo.csv, gene_association does not have inferred edges
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
@@ -50,9 +50,9 @@ def main():
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
 
-    go_inferred_columns = [0, 2]
+    go_inferred_columns = [1, 4]  #[0, 2] for fly_proGo.csv
     go_protein_pairs = read_specific_columns(
-        go_association_path, go_inferred_columns, ","
+        go_association_path, go_inferred_columns, "\t"
     )
 
     protein_list = []
@@ -76,7 +76,7 @@ def main():
         "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
 
-    x = 2  # Number of replicates
+    x = 20  # Number of replicates
     print_graphs = False
     auc = {}
     # index 0 is ROC, index 1 is Precision Recall
@@ -88,7 +88,7 @@ def main():
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
         print("\n\nReplicate: " + str(i) + "\n")
 
-        # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
+        # requires new positive/negative dataset to be made each replicate
         positive_dataset, negative_dataset = sample_data(
             go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
         )
@@ -125,7 +125,7 @@ def main():
     print()
     print(df)
     df.to_csv(
-        Path(output_data_path, "repeated_auc_values.csv"),
+        Path(output_data_path, "auc_values_no_inferred_edges.csv"),
         index=True,
         sep="\t",
     )

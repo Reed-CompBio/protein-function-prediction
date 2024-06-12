@@ -35,7 +35,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
         """
         Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of 
         interest and a GO term. Only uses proteins inside the sub-network (comprised of proteins linked with the protein 
-        of interest and/or the GO term). Does not include the protein of interest.
+        of interest and/or the GO term). Edge removed between positive protein and go term.
         """
         colorama_init()
 
@@ -65,7 +65,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
             negative_dataset["protein"],
             negative_dataset["go"],
         ):
-
+            G.remove_edge(positive_protein, positive_go)
             # calculate the score for the positive set
             positive_pro_pro_neighbor = get_neighbors(
                 G, positive_protein, "protein_protein"
@@ -77,9 +77,9 @@ class HypergeometricDistributionV3(BaseAlgorithm):
                 )
             )
             
-            pos_N = len(positive_pro_pro_neighbor) + len(positive_go_neighbor) -positive_go_annotated_pro_pro_neighbor_count - 1 #Sample size is only the neighbors of the protein & GO term of interest
+            pos_N = len(positive_pro_pro_neighbor) + len(positive_go_neighbor) -positive_go_annotated_pro_pro_neighbor_count #Sample size is only the neighbors of the protein & GO term of interest
             pos_n = len(positive_pro_pro_neighbor) #Number of protein neighbors the protein of interest has
-            K = len(positive_go_neighbor) - 1 #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include the protein of interest
+            K = len(positive_go_neighbor) #Number of protein neighbors the GO term of interest has, same for pos & neg
             pos_k = positive_go_annotated_pro_pro_neighbor_count #The overlap between the GO term and the protein of interst's neighbor proteins
 
             #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
@@ -124,6 +124,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
             data["true_label"].append(0)
 
             print_progress(i, len(positive_dataset["protein"]))
+            G.add_edge(positive_protein, positive_go, type = "protein_go_term")
             i += 1
 
         normalized_data = normalize(data["score"])

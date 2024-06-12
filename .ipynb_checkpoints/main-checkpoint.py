@@ -9,6 +9,12 @@ from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
 from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
 from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
+from classes.removed_edge.overlapping_neighbors_class_no_pi import OverlappingNeighborsNoPI
+from classes.removed_edge.overlapping_neighbors_v2_class_no_pi import OverlappingNeighborsV2NoPI
+from classes.removed_edge.overlapping_neighbors_v3_class_no_pi import OverlappingNeighborsV3NoPI
+from classes.removed_edge.protein_degree_class_no_pi import ProteinDegreeNoPI
+from classes.removed_edge.protein_degree_v2_class_no_pi import ProteinDegreeV2NoPI
+from classes.removed_edge.protein_degree_v3_class_no_pi import ProteinDegreeV3NoPI
 
 import matplotlib.pyplot as plt
 from random import sample
@@ -39,7 +45,7 @@ def main():
         os.makedirs("output/images")
 
     interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_association_path = Path("./network/fly_proGo.csv")
+    go_association_path = Path("./network/fly_proGo.csv") #gene_association.fb, gene_association does not have inferred edges
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
@@ -54,7 +60,7 @@ def main():
     interactome_columns = [0, 1, 4, 5]
     interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
 
-    go_inferred_columns = [0, 2]
+    go_inferred_columns = [0, 2]  #[1, 4] for gene_association.fb
     go_protein_pairs = read_specific_columns(
         go_association_path, go_inferred_columns, ","
     )
@@ -62,22 +68,28 @@ def main():
     protein_list = []
 
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
-    # G, protein_list = create_ppi_network(interactome, go_protein_pairs)
-    # export_graph_to_pickle(G, graph_file_path)
+    G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+    export_graph_to_pickle(G, graph_file_path)
 
     # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    # positive_dataset, negative_dataset = sample_data(
-    #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    # )
+    positive_dataset, negative_dataset = sample_data(
+        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+    )
 
     # Define algorithm classes and their names
     algorithm_classes = {
-        "OverlappingNeighbors": OverlappingNeighbors,
-        "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        "ProteinDegree": ProteinDegree,
-        "ProteinDegreeV2": ProteinDegreeV2,
-        "ProteinDegreeV3": ProteinDegreeV3,
+        # "OverlappingNeighbors": OverlappingNeighbors,
+        # "OverlappingNeighborsNoPI": OverlappingNeighborsNoPI,
+        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        # "OverlappingNeighborsV2NoPI": OverlappingNeighborsV2NoPI,
+        # "OverlappingNeighborsV3": OverlappingNeighborsV3, 
+        # "OverlappingNeighborsV3NoPI": OverlappingNeighborsV3NoPI,
+        # "ProteinDegree": ProteinDegree,
+        # "ProteinDegreeNoPI": ProteinDegreeNoPI,
+        # "ProteinDegreeV2": ProteinDegreeV2,
+        # "ProteinDegreeV2NoPI": ProteinDegreeV2NoPI,
+        # "ProteinDegreeV3": ProteinDegreeV3,
+        # "ProteinDegreeV3NoPI": ProteinDegreeV3NoPI
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
@@ -87,10 +99,10 @@ def main():
 
     results = run_workflow(
         algorithm_classes,
-        testing_input_directory_path,
-        testing_graph_file_path,
-        testing_output_data_path,
-        testing_output_image_path,
+        dataset_directory_path, #testing_input_directory_path,
+        graph_file_path, #testing_graph_file_path,
+        output_data_path, #testing_output_data_path,
+        output_image_path, #testing_output_image_path,
         True,
         True,
     )
