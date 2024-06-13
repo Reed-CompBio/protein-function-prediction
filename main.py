@@ -23,6 +23,7 @@ from tools.helper import (
     read_specific_columns,
     print_progress,
     export_graph_to_pickle,
+    read_pro_go_data,
 )
 from tools.workflow import run_workflow, sample_data
 
@@ -55,13 +56,17 @@ def main():
     testing_output_image_path = Path("./output/images/")
     testing_input_directory_path = Path("./tests/testing-dataset/")
     testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
-    
-    interactome_columns = [0, 1]
-    interactome = read_specific_columns(zfish_interactome_path, interactome_columns, ",")
 
-    go_inferred_columns = [0, 2]
-    go_protein_pairs = read_specific_columns(
-        zfish_go_association_path, go_inferred_columns, ","
+    namespace = ["molecular_function", "biological_process", "cellular_component"]
+    # change the go_term_type variable to include which go term namespace you want
+    go_term_type = [namespace[2]]
+
+    interactome_columns = [0, 1]
+    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
+
+    go_inferred_columns = [0, 2, 3]
+    go_protein_pairs = read_pro_go_data(
+        fly_go_association_path, go_inferred_columns, go_term_type, ","
     )
 
     protein_list = []
@@ -77,13 +82,13 @@ def main():
 
     # Define algorithm classes and their names
     algorithm_classes = {
-        # "OverlappingNeighbors": OverlappingNeighbors,
-        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        # "ProteinDegree": ProteinDegree,
-        # "ProteinDegreeV2": ProteinDegreeV2,
-        # "ProteinDegreeV3": ProteinDegreeV3,
-        # "SampleAlgorithm": SampleAlgorithm,
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
+        "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,

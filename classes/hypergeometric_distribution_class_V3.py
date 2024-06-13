@@ -81,7 +81,6 @@ class HypergeometricDistributionV3(BaseAlgorithm):
             pos_n = len(positive_pro_pro_neighbor) #Number of protein neighbors the protein of interest has
             K = len(positive_go_neighbor) - 1 #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include the protein of interest
             pos_k = positive_go_annotated_pro_pro_neighbor_count #The overlap between the GO term and the protein of interst's neighbor proteins
-            print("pos_N: ", pos_N, "pos_n: ", pos_n, "K: ", K, "pos_k: ", pos_k)
             #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
             positive_score = 1 - ((math.comb(K,pos_k)*math.comb(pos_N-K,pos_n-pos_k))/math.comb(pos_N,pos_n))
 

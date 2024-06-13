@@ -141,8 +141,15 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
     colors = generate_random_colors(len(algorithm_classes))
 
     sorted_results = sort_results_by(results, "roc_auc", output_data_path)
-    i = 0
-    plt.figure()
+    # Initialize your parameters
+    fig_width = 10  # width in inches
+    fig_height = 7  # height in inches
+    fig_dpi = 100  # dots per inch for the figure
+    save_dpi = 200  # dots per inch for the saved image
+
+    plt.figure(figsize=(fig_width, fig_height), dpi=fig_dpi)
+
+    i = 0  # Initialize your index for colors
     for algorithm_name, metrics in sorted_results.items():
         plt.plot(
             metrics["fpr"],
@@ -164,7 +171,7 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
 
     sorted_results = sort_results_by(results, "pr_auc", output_data_path)
     i = 0
-    plt.figure()
+    plt.figure(figsize=(fig_width, fig_height), dpi=fig_dpi)
     for algorithm_name, metrics in sorted_results.items():
         plt.plot(
             metrics["recall"],
@@ -177,7 +184,7 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
     plt.xlabel("Recall")
     plt.ylabel("Precision")
     plt.title("Precision-Recall Curve")
-    plt.legend(loc="lower left")
+    plt.legend(loc="lower right")
     plt.savefig(Path(output_image_path, "multiple_pr_curves.png"))
     plt.show()
 
