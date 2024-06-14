@@ -7,8 +7,6 @@ from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
-from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
-from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
 
 import matplotlib.pyplot as plt
 from random import sample
@@ -72,11 +70,9 @@ def main():
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
-        "HypergeometricDistributionV3": HypergeometricDistributionV3,
-        "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
 
-    x = 2  # Number of replicates
+    x = 20  # Number of replicates
     print_graphs = False
     auc = {}
     # index 0 is ROC, index 1 is Precision Recall
@@ -125,7 +121,7 @@ def main():
     print()
     print(df)
     df.to_csv(
-        Path(output_data_path, "repeated_auc_values.csv"),
+        Path(output_data_path, "auc_values_fly.csv"),
         index=True,
         sep="\t",
     )

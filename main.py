@@ -7,8 +7,6 @@ from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
-from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
-from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
 
 import matplotlib.pyplot as plt
 from random import sample
@@ -57,11 +55,11 @@ def main():
     testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
     
     interactome_columns = [0, 1]
-    interactome = read_specific_columns(zfish_interactome_path, interactome_columns, ",")
+    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
 
-    go_inferred_columns = [0, 2]
+    go_inferred_columns = [0,2]
     go_protein_pairs = read_specific_columns(
-        zfish_go_association_path, go_inferred_columns, ","
+        fly_go_association_path, go_inferred_columns, ","
     )
 
     protein_list = []
@@ -84,10 +82,8 @@ def main():
         # "ProteinDegreeV2": ProteinDegreeV2,
         # "ProteinDegreeV3": ProteinDegreeV3,
         # "SampleAlgorithm": SampleAlgorithm,
-        "HypergeometricDistribution": HypergeometricDistribution,
+        # "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
-        "HypergeometricDistributionV3": HypergeometricDistributionV3,
-        "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
 
     results = run_workflow(
