@@ -37,20 +37,25 @@ def main():
     if not os.path.exists("output/images"):
         os.makedirs("output/images")
 
-    interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_association_path = Path("./network/fly_proGo.csv")
+    fly_interactome_path = Path("./network/fly_propro.csv")
+    fly_go_association_path = Path("./network/fly_proGo.csv")
+    zfish_interactome_path = Path("./network/zfish_propro.csv")
+    zfish_go_association_path = Path("./network/zfish_proGo.csv")
+    bsub_interactome_path = Path("./network/bsub_propro.csv")
+    bsub_go_association_path = Path("./network/bsub_proGo.csv")
+    
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 1000
 
-    interactome_columns = [0, 1, 4, 5]
-    interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
+    interactome_columns = [0, 1]
+    interactome = read_specific_columns(bsub_interactome_path, interactome_columns, ",")
 
-    go_inferred_columns = [0, 2]
+    go_inferred_columns = [0,2]
     go_protein_pairs = read_specific_columns(
-        go_association_path, go_inferred_columns, ","
+        bsub_go_association_path, go_inferred_columns, ","
     )
 
     protein_list = []
@@ -121,7 +126,7 @@ def main():
     print()
     print(df)
     df.to_csv(
-        Path(output_data_path, "auc_values_fly.csv"),
+        Path(output_data_path, "auc_values_bsub.csv"), #Change name for different output file
         index=True,
         sep="\t",
     )

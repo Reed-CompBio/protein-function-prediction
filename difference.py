@@ -6,10 +6,12 @@ import numpy as np
 import pandas as pd
 from decimal import Decimal
 
-#Compares inferred ROC and PR values to values from a non-inferred dataset, code requires both to have been run with the same algorithms and for existing auc_values.csv file and auc_values_no_inferred_edges.csv
+#Compares inferred ROC and PR values given two datasets, code requires both to have been run with the same algorithms and saved in an auc_values_<name> file
 
 a = pd.read_csv("./output/data/auc_values_fly.csv")
-b = pd.read_csv("./output/data/auc_values_no_inferred_edges.csv")
+a_name = "Fly"
+b = pd.read_csv("./output/data/auc_values_bsub.csv")
+b_name = "B. Subtilis"
 
 k = list(a)[0]
 keys = k.split('\t')
@@ -46,41 +48,47 @@ df = pd.DataFrame.from_dict(
 )
 
 def cellColor(val):
-    if val > .9:
-        return "darkolivegreen"
-    elif val > .3:
-        return "olive"
+    if val > .09:
+        return "royalblue"
+    elif val > .03:
+        return "cornflowerblue"
     elif val > 0:
-        return "yellowgreen"
+        return "lightsteelblue"
     elif val == 0:
         return "white"
-    elif val < -0.9:
-        return "darkred"
-    elif val < -0.3:
-        return "firebrick"
+    elif val < -0.09:
+        return "red"
+    elif val < -0.03:
+        return "tomato"
     else:
-        return "indianred"
+        return "lightsalmon"
 
-color = [] #More red -> b is better, more green -> a is better 
+color = [] #darker red -> b is better, darker blue -> a is better 
 for i in difference:
     cell_color = ["","","",""]
     cell_color[0] = cellColor(difference[i][0])
-    cell_color[1] = cellColor(difference[i][1])
+    cell_color[1] = cellColor(-difference[i][1])
     cell_color[2] = cellColor(difference[i][2])
-    cell_color[3] = cellColor(difference[i][3])
+    cell_color[3] = cellColor(-difference[i][3])
     color.append(cell_color)
+
+title = "The Difference Between " + a_name + " (Blue) and " + b_name + " (Red) Datasets"
+savename = "auc_value_difference_" + a_name + "_" + b_name
+savename = savename.lower().replace(" ", "")
 
 fig, ax = plt.subplots()
 ax.axis('off')
 ax.axis('tight')
 tab = ax.table(cellText=df.values, rowLabels = rows, colLabels=cols, cellColours = color, bbox = [0, .2, 1, .6])
+ax.set_title(title, x = .3, y = .82)
 tab.auto_set_font_size(False)
 tab.set_fontsize(7)
 fig.tight_layout()
+plt.savefig("./output/images/%s.png" % savename)
 plt.show()
 
 df.to_csv(
-    Path("./output/data/", "difference_between_inferred_and_not.csv"),
+    Path("./output/data/", "%s.csv" % savename),
     index=True,
     sep="\t",
 )
