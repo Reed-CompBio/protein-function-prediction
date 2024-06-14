@@ -8,6 +8,9 @@ from classes.protein_degree_v2_class import ProteinDegreeV2
 from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.base_algorithm_class import BaseAlgorithm
+from classes.hypergeometric_distribution_class import HypergeometricDistribution
+from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
+
 from pathlib import Path
 from tools.helper import (
     read_specific_columns,
@@ -70,6 +73,8 @@ def test_algorithm_workflow():
         "ProteinDegree": ProteinDegree,
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2
     }
 
     results = run_workflow(
@@ -88,10 +93,8 @@ def test_algorithm_workflow():
         "ProteinDegree": 0.825,
         "ProteinDegreeV2": 0.675,
         "ProteinDegreeV3": 0.89,
-        "HypergeometricDistribution": 0.78,
-        "HypergeometricDistributionV2": 0.89,
-        "HypergeometricDistributionV3": 0.675,
-        "HypergeometricDistributionV4": 0.6
+        "HypergeometricDistribution": 0.76,
+        "HypergeometricDistributionV2": 0.86,
     }
 
     pr_results = {
@@ -102,10 +105,8 @@ def test_algorithm_workflow():
         "ProteinDegreeV2": 0.6367757242757243,
         "OverlappingNeighbors": 0.5329058916229968,
         "SampleAlgorithm": 0.4093791854859966,
-        "HypergeometricDistribution": 0.7899246806,
-        "HypergeometricDistributionV2": 0.8519169719,
-        "HypergeometricDistributionV3": 0.7142573629,
-        "HypergeometricDistributionV4": 0.6967847007,
+        "HypergeometricDistribution": 0.7899246805825753,
+        "HypergeometricDistributionV2":	0.8519169719169718,
     }
 
     for algorithm, metrics in results.items():
@@ -113,3 +114,113 @@ def test_algorithm_workflow():
 
     for algorithm, metrics in results.items():
         assert metrics["pr_auc"] == pr_results[algorithm]
+        
+
+def test_self_edge_case(): #Redundant but mostly for the sake of seperation, I can add it to the above section
+    if not os.path.exists("output"):
+        os.makedirs("output")
+    if not os.path.exists("output/dataset"):
+        os.makedirs("output/dataset")
+    if not os.path.exists("output/data"):
+        os.makedirs("output/data")
+    if not os.path.exists("output/images"):
+        os.makedirs("output/images")
+
+    output_data_path = Path("./output/data/")
+    output_image_path = Path("./output/images/")
+    input_directory_path = Path("./tests/testing-dataset/zfish")
+    graph_file_path = Path(input_directory_path, "graph.pickle")
+
+    algorithm_classes = {
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2
+    }
+
+    #For zfish
+    results = run_workflow(
+        algorithm_classes,
+        input_directory_path,
+        graph_file_path,
+        output_data_path,
+        output_image_path,
+        False,
+        False,
+    )
+    roc_results = {
+        "OverlappingNeighbors": 0.715,
+        "OverlappingNeighborsV2": 0.8,
+        "OverlappingNeighborsV3": 0.7899999999999999,
+        "ProteinDegree": 0.9650000000000001,
+        "ProteinDegreeV2": 0.775,
+        "ProteinDegreeV3": 0.9750000000000001,
+        "HypergeometricDistribution": 0.5449999999999999,
+        "HypergeometricDistributionV2": 0.8300000000000001,
+    }
+
+    pr_results = {
+        "ProteinDegreeV3": 0.9754545454545455,
+        "ProteinDegree": 0.9675757575757575,
+        "OverlappingNeighborsV3": 0.8179265873015872,
+        "OverlappingNeighborsV2": 0.8292361111111111,
+        "ProteinDegreeV2": 0.7573318322544329,
+        "OverlappingNeighbors": 0.5794961247902424,
+        "SampleAlgorithm": 0.43900023737872035,
+        "HypergeometricDistribution": 0.5095882374849092,
+        "HypergeometricDistributionV2":	0.674983904983905,
+    }
+
+    for algorithm, metrics in results.items():
+        assert metrics["roc_auc"] == roc_results[algorithm]
+
+    for algorithm, metrics in results.items():
+        assert metrics["pr_auc"] == pr_results[algorithm]
+
+
+    #For Bsub
+    input_directory_path = Path("./tests/testing-dataset/bsub")
+    graph_file_path = Path(input_directory_path, "graph.pickle")
+    
+    results = run_workflow(
+        algorithm_classes,
+        input_directory_path,
+        graph_file_path,
+        output_data_path,
+        output_image_path,
+        False,
+        False,
+    )
+    roc_results = {
+        "OverlappingNeighbors": 0.575,
+        "OverlappingNeighborsV2": 0.6399999999999999,
+        "OverlappingNeighborsV3": 0.6399999999999999,
+        "ProteinDegree": 0.7050000000000001,
+        "ProteinDegreeV2": 0.54,
+        "ProteinDegreeV3": 0.71,
+        "HypergeometricDistribution": 0.51,
+        "HypergeometricDistributionV2": 0.8499999999999999,
+    }
+
+    pr_results = {
+        "ProteinDegreeV3": 0.6918311998459057,
+        "ProteinDegree": 0.6560890253537313,
+        "OverlappingNeighborsV3": 0.5933333333333334,
+        "OverlappingNeighborsV2": 0.5933333333333334,
+        "ProteinDegreeV2": 0.588080808080808,
+        "OverlappingNeighbors": 0.5224841799067805,
+        "SampleAlgorithm": 0.5922520550055379,
+        "HypergeometricDistribution": 0.5001244588744589,
+        "HypergeometricDistributionV2":	0.7131783494283495,
+    }
+
+    for algorithm, metrics in results.items():
+        assert metrics["roc_auc"] == roc_results[algorithm]
+
+    for algorithm, metrics in results.items():
+        assert metrics["pr_auc"] == pr_results[algorithm]
+

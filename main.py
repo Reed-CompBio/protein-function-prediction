@@ -61,37 +61,37 @@ def main():
     go_protein_pairs = read_specific_columns(
         fly_go_association_path, go_inferred_columns, ","
     )
-
+        
     protein_list = []
 
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
-    G, protein_list = create_ppi_network(interactome, go_protein_pairs)
-    export_graph_to_pickle(G, graph_file_path)
+    # G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+    # export_graph_to_pickle(G, testing_graph_file_path)
 
     # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    positive_dataset, negative_dataset = sample_data(
-        go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    )
+    # positive_dataset, negative_dataset = sample_data(
+    #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+    # )
 
     # Define algorithm classes and their names
     algorithm_classes = {
-        # "OverlappingNeighbors": OverlappingNeighbors,
-        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        # "ProteinDegree": ProteinDegree,
-        # "ProteinDegreeV2": ProteinDegreeV2,
-        # "ProteinDegreeV3": ProteinDegreeV3,
-        # "SampleAlgorithm": SampleAlgorithm,
-        # "HypergeometricDistribution": HypergeometricDistribution,
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
+        "SampleAlgorithm": SampleAlgorithm,
+        "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
     }
 
     results = run_workflow(
         algorithm_classes,
-        dataset_directory_path,
-        graph_file_path,
-        output_data_path,
-        output_image_path,
+        testing_input_directory_path,
+        testing_graph_file_path,
+        testing_output_data_path,
+        testing_output_image_path,
         True,
         True,
     )

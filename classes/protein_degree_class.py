@@ -52,14 +52,20 @@ class ProteinDegree(BaseAlgorithm):
             negative_dataset["go"],
         ):
 
+            c = 0 
+            if G.has_edge(positive_protein, positive_protein):
+                c = 1
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
-            data["degree"].append(G.degree(positive_protein))
+            data["degree"].append(G.degree(positive_protein) - c)
             data["true_label"].append(1)
 
+            c = 0
+            if G.has_edge(negative_protein, negative_protein):
+                c = 1
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
-            data["degree"].append(G.degree(negative_protein))
+            data["degree"].append(G.degree(negative_protein) - c)
             data["true_label"].append(0)
             print_progress(i, len(positive_dataset["protein"]))
             i += 1

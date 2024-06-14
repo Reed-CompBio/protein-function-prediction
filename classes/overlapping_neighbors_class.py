@@ -55,7 +55,6 @@ class OverlappingNeighbors(BaseAlgorithm):
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path)
         G = import_graph_from_pickle(graph_file_path)
-
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
             positive_dataset["protein"],
@@ -63,22 +62,30 @@ class OverlappingNeighbors(BaseAlgorithm):
             negative_dataset["protein"],
             negative_dataset["go"],
         ):
-
+            c = 0
+            if G.has_edge(positive_protein, positive_protein):
+                c = 1
             # calculate the score for the positive set
             positive_pro_pro_neighbor = get_neighbors(
                 G, positive_protein, "protein_protein"
             )
+            
+            # print("\nPositive protein neighbors: " + str(positive_pro_pro_neighbor))
             positive_go_neighbor = get_neighbors(G, positive_go, "protein_go_term")
             positive_go_annotated_pro_pro_neighbor_count = (
                 get_go_annotated_pro_pro_neighbor_count(
                     G, positive_pro_pro_neighbor, positive_go
                 )
-            )
+            ) - c
+        
             positive_score = (1 + positive_go_annotated_pro_pro_neighbor_count) / (
-                len(positive_pro_pro_neighbor) + len(positive_go_neighbor)
+                len(positive_pro_pro_neighbor) -c + len(positive_go_neighbor)
             )
 
             # calculate the score for the negative set
+            c = 0
+            if G.has_edge(negative_protein, negative_protein):
+                c = 1
             negative_pro_pro_neighbor = get_neighbors(
                 G, negative_protein, "protein_protein"
             )
@@ -89,7 +96,7 @@ class OverlappingNeighbors(BaseAlgorithm):
                 )
             )
             negative_score = (1 + negative_go_annotated_protein_neighbor_count) / (
-                len(negative_pro_pro_neighbor) + len(negative_go_neighbor)
+                len(negative_pro_pro_neighbor) - c + len(negative_go_neighbor)
             )
 
             # input positive and negative score to data
@@ -141,7 +148,7 @@ def get_neighbors(G: nx.Graph, node, edgeType):
     for edge in res:
         if edge[2]["type"] == edgeType:
             neighborNode = [edge[1], edge[2]]
-            neighbors.append(neighborNode)
+            neighbors.append(neighborNode) 
 
     return neighbors
 
