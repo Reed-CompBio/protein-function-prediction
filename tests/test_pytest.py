@@ -8,14 +8,12 @@ from classes.protein_degree_v2_class import ProteinDegreeV2
 from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.base_algorithm_class import BaseAlgorithm
-from pathlib import Path
-from tools.helper import (
-    read_specific_columns,
-    import_graph_from_pickle,
-)
-from tools.workflow import run_workflow
-import os
+from classes.hypergeometric_distribution_class import HypergeometricDistribution
+from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
 
+from pathlib import Path
+from tools.workflow import run_experiement
+import os
 
 
 def test_algorithm_attributes():
@@ -26,7 +24,8 @@ def test_algorithm_attributes():
         "ProteinDegree": ProteinDegree,
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
-        "SampleAlgorithm": SampleAlgorithm,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2,
     }
     for algorithm in algorithm_classes:
         assert hasattr(algorithm_classes[algorithm](), "y_score")
@@ -41,14 +40,15 @@ def test_algorithm_inherits_class():
         "ProteinDegree": ProteinDegree,
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
-        "SampleAlgorithm": SampleAlgorithm,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2,
     }
 
     for algorithm in algorithm_classes:
         assert issubclass(algorithm_classes[algorithm], BaseAlgorithm)
 
 
-def test_algorithm_workflow():
+def test_algorithm_experiment():
     if not os.path.exists("output"):
         os.makedirs("output")
     if not os.path.exists("output/dataset"):
@@ -70,9 +70,11 @@ def test_algorithm_workflow():
         "ProteinDegree": ProteinDegree,
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2,
     }
 
-    results = run_workflow(
+    results = run_experiement(
         algorithm_classes,
         input_directory_path,
         graph_file_path,
@@ -88,10 +90,8 @@ def test_algorithm_workflow():
         "ProteinDegree": 0.825,
         "ProteinDegreeV2": 0.675,
         "ProteinDegreeV3": 0.89,
-        "HypergeometricDistribution": 0.78,
-        "HypergeometricDistributionV2": 0.89,
-        "HypergeometricDistributionV3": 0.675,
-        "HypergeometricDistributionV4": 0.6
+        "HypergeometricDistribution": 0.76,
+        "HypergeometricDistributionV2": 0.86,
     }
 
     pr_results = {
@@ -101,11 +101,8 @@ def test_algorithm_workflow():
         "OverlappingNeighborsV2": 0.7467907092907092,
         "ProteinDegreeV2": 0.6367757242757243,
         "OverlappingNeighbors": 0.5329058916229968,
-        "SampleAlgorithm": 0.4093791854859966,
-        "HypergeometricDistribution": 0.7899246806,
-        "HypergeometricDistributionV2": 0.8519169719,
-        "HypergeometricDistributionV3": 0.7142573629,
-        "HypergeometricDistributionV4": 0.6967847007,
+        "HypergeometricDistribution": 0.7899246805825753,
+        "HypergeometricDistributionV2": 0.8519169719169718,
     }
 
     for algorithm, metrics in results.items():

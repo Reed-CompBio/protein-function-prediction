@@ -60,9 +60,9 @@ def run_workflow(
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
         print("\n\nReplicate: " + str(i) + "\n")
 
-        positive_dataset, negative_dataset = sample_data(
-            go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-        )
+        # positive_dataset, negative_dataset = sample_data(
+        #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+        # )
 
         results = run_experiement(
             algorithm_classes,
