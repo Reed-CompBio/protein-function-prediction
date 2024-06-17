@@ -2,16 +2,113 @@ from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from tools.helper import print_progress
 from sklearn.metrics import f1_score
 import numpy as np
-from tools.helper import add_print_statements, generate_random_colors
+from tools.helper import (
+    add_print_statements,
+    generate_random_colors,
+    import_graph_from_pickle,
+)
 from pathlib import Path
 import matplotlib.pyplot as plt
 import random
 from random import sample
 import pandas as pd
 from operator import itemgetter
+import statistics as stat
 
 
 def run_workflow(
+    algorithm_classes,
+    go_protein_pairs,
+    sample_size,
+    protein_list,
+    graph_file_path,
+    dataset_directory_path,
+    output_data_path,
+    output_image_path,
+    repeats,
+):
+    """
+    With a given set of algorithms, test the algorithms ability to prediction protein function on a given number of
+    repetitions and sample size. This starts the workflow to calculate PR and ROC curves
+
+    Parameters:
+    algorithm_classes {dict} : a dictionary with keys as algorithm names and values as those algorithms' respective classes
+    go_protein_pairs {list} : a list containing the edge between a protein and a go-term e.g. [[protein1, go_term1], [protein2, go_term2], ...]
+    sample_size {int} : the size of a positive/negative dataset to be sampled
+    protein_list {list} : a list of all proteins in the graph
+    graph_file_path {Path} : path of the exported nx graph
+    dataset_directory_path {Path} : path of the directory containing the datasets
+    output_data_path {Path} : path of the output data
+    output_image_path {Path} : path of the output image
+    repeats {int} : the number of experiment repetitions
+
+    Returns:
+    Null
+    """
+    G = import_graph_from_pickle(graph_file_path)
+    x = repeats  # Number of replicates
+    print_graphs = True
+    if x > 1:
+        print_graphs = False
+    auc = {}
+    # index 0 is ROC, index 1 is Precision Recall
+    for i in algorithm_classes.keys():
+        auc[i] = [[], []]
+
+    for i in range(
+        x
+    ):  # Creates a pos/neg list each replicate then runs workflow like normal
+        print("\n\nReplicate: " + str(i) + "\n")
+
+        positive_dataset, negative_dataset = sample_data(
+            go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
+        )
+
+        results = run_experiement(
+            algorithm_classes,
+            dataset_directory_path,
+            graph_file_path,
+            output_data_path,
+            output_image_path,
+            True,
+            print_graphs,
+        )
+
+        # each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
+        for i in algorithm_classes.keys():
+            auc[i][0].append(results[i]["roc_auc"])
+            auc[i][1].append(results[i]["pr_auc"])
+
+    # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
+    if x > 1:
+        for i in auc.keys():
+            meanROC = round(stat.mean(auc[i][0]), 5)
+            auc[i].append(round(stat.mean(auc[i][1]), 5))
+            auc[i].append(round(stat.stdev(auc[i][1]), 5))
+            auc[i][1] = round(stat.stdev(auc[i][0]), 5)
+            auc[i][0] = meanROC
+
+        # Prints the roc and pr table, then saves to .csv file
+        df = pd.DataFrame.from_dict(
+            auc,
+            orient="index",
+            columns=[
+                "ROC mean",
+                "ROC sd",
+                "Precision/Recall mean",
+                "Precision/Recall sd",
+            ],
+        )
+        print()
+        print(df)
+        df.to_csv(
+            Path(output_data_path, str(x) + "_repeated_auc_values.csv"),
+            index=True,
+            sep="\t",
+        )
+
+
+def run_experiement(
     algorithm_classes,
     input_directory_path,
     graph_file_path,
@@ -20,6 +117,19 @@ def run_workflow(
     threshold,
     figures,
 ):
+    """
+    Run an iteration with a sample dataset on all the algorithms, calculating their protein prediction scores
+
+    Parameters:
+    algorithm_classes {dict} : a dictionary with keys as algorithm names and values as those algorithms' respective classes
+    input_directory_path {Path} : path of positive and negative datasets
+    graph_file_path {Path} : path of the exported nx graph
+    output_data_path {Path} : path of the output data
+    output_image_path {Path} : path of the output image
+
+    Returns:
+    Results {dictionary} : contains a key value pair where each association algorithms is a key and their values are the metrics and threshold results
+    """
     print("")
     print("-" * 65)
     print("Calculating Protein Prediction")
@@ -38,7 +148,9 @@ def run_workflow(
     if threshold:
         run_thresholds(results, algorithm_classes, output_data_path)
         if figures:
-            generate_figures(algorithm_classes, results, output_image_path, output_data_path)
+            generate_figures(
+                algorithm_classes, results, output_image_path, output_data_path
+            )
 
     return results
 
@@ -49,6 +161,18 @@ def run_algorithm(
     graph_file_path,
     output_data_path,
 ):
+    """
+    With a given dataset, run an algorithm's predict method.
+
+    Parameters:
+    algorithm_class {class} : the respective algorithm's class
+    input_directory_path {Path} : path of positive and negative datasets
+    graph_file_path {Path} : path of the exported nx graph
+    output_data_path {Path} : path of the output data
+
+    Returns:
+    Result {dict} : a dictionary that stores the y_true and y_score values of the algorithm
+    """
     # Create an instance of the algorithm class
     algorithm = algorithm_class()
 
@@ -67,6 +191,15 @@ def run_algorithm(
 
 
 def run_metrics(current):
+    """
+    Add more keys to the current {dict} that contains metrics and stats
+
+    Parameters:
+    current {dict}: a dictionary containing initially the y_score and y_true values of an algorithm
+
+    Returns:
+    current {dict} : a dictionary that stores the y_true, y_score, and metrics of a given algorithm.
+    """
     # Compute ROC curve and ROC area for a classifier
     current["fpr"], current["tpr"], current["thresholds"] = roc_curve(
         current["y_true"], current["y_score"]
@@ -83,6 +216,17 @@ def run_metrics(current):
 
 
 def run_thresholds(results, algorithm_classes, output_data_path):
+    """
+    Across all the algorithms, calculate their thresholds using three threshold metrics, youden_j, max_f1, and optimal_distance
+
+    Parameters:
+    results {dict}: a dictionary that stores the y_true, y_score, and metrics of all the algorithms
+    algorithm_classes {dict} : a dictionary containing the algorithms and its respective algorithm class
+    output_data_path {Path} : path of the output data
+
+    Returns:
+    Null
+    """
     print("")
     print("-" * 65)
     print("Calculating Optimal Thresholds")
@@ -136,6 +280,18 @@ def run_thresholds(results, algorithm_classes, output_data_path):
 
 
 def generate_figures(algorithm_classes, results, output_image_path, output_data_path):
+    """
+    Generate ROC and PR figures to compare methods
+
+    Parameters:
+    algorithm_classes {dict} : a dictionary containing the algorithms and its respective algorithm class
+    results {dict}: a dictionary that stores the y_true, y_score, and metrics of all the algorithms
+    output_image_path {Path} : path of the output image
+    output_data_path {Path} : path of the output data
+
+    Returns:
+    Null
+    """
     # Generate ROC and PR figures to compare methods
 
     colors = generate_random_colors(len(algorithm_classes))
@@ -190,6 +346,21 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
 
 
 def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_path):
+    """
+    Given a sample size, generate positive nad negative datasets.
+
+    Parameters:
+
+    go_protein_pairs {list} : a list containing the edge between a protein and a go-term e.g. [[protein1, go_term1], [protein2, go_term2], ...]
+    sample_size {int} : the size of a positive/negative dataset to be sampled
+    protein_list {list} : a list of all proteins in the graph
+    G {nx.Graph} : graph that represents the interactome and go term connections
+    input_directory_path {Path} : Path to directory of the datasets
+
+    Returns:
+    positive_dataset, negative_dataset
+
+    """
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
     # sample the data
@@ -227,6 +398,17 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
 
 
 def get_datasets(input_directory_path):
+    """
+    get the positive and negative datasets as lists by reading their csv files
+
+    Parameters:
+
+    input_directory_path {Path} : Path to directory of the datasets
+
+    Returns:
+    positive_dataset, negative_dataset
+
+    """
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
     with open(
@@ -253,8 +435,21 @@ def get_datasets(input_directory_path):
 
 
 def sort_results_by(results, key, output_path):
+    """
+    Given a the results, sort them by value of ROC/PR
+
+    Parameters:
+
+    results {dict}: a dictionary that stores the y_true, y_score, and metrics of all the algorithms
+    key {str} : PR or ROC
+    output_path {Path} : Path to where to write the pr/roc results
+
+    Returns:
+    sorted_results {dict }
+
+    """
     algorithm_tuple_list = []
-    data = {"algorithm" : [], key: []}
+    data = {"algorithm": [], key: []}
     output_file_path = Path(output_path, key + "_results.csv")
 
     # make a list of tuples where a tuple is (algorithm_name, the metric we will be sorting by)
