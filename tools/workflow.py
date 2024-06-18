@@ -55,10 +55,15 @@ def run_workflow(
     for i in algorithm_classes.keys():
         auc[i] = [[], []]
 
+    #Generate number of datasets if they don't already exist 
+    
+
+    
     for i in range(
         x
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
-        print("\n\nReplicate: " + str(i) + "\n")
+        if x > 1:
+            print("\n\nReplicate: " + str(i+1) + "\n")
 
         # positive_dataset, negative_dataset = sample_data(
         #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
@@ -76,11 +81,24 @@ def run_workflow(
 
         # each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
         for i in algorithm_classes.keys():
-            auc[i][0].append(results[i]["roc_auc"])
-            auc[i][1].append(results[i]["pr_auc"])
+            auc[i][0].append(round(results[i]["roc_auc"],5))
+            auc[i][1].append(round(results[i]["pr_auc"],5))
 
-    # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
+    #Creates a dictionary for all pr values and all roc values 
+    roc = {}
+    pr = {}
+
+    for i in algorithm_classes.keys():
+        roc[i] = auc[i][0]
+        pr[i] = auc[i][1]
+    
     if x > 1:
+        cols = []
+        for i in range(x):
+            cols.append("Replicate " + str(i+1))
+        name = "_replicate_list"
+        
+        # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
         for i in auc.keys():
             meanROC = round(stat.mean(auc[i][0]), 5)
             auc[i].append(round(stat.mean(auc[i][1]), 5))
@@ -106,7 +124,34 @@ def run_workflow(
             index=True,
             sep="\t",
         )
+    else:
+        cols = ["AUC"]
+        name = "_auc_results"
+        
+    dfr = pd.DataFrame.from_dict(
+        roc,
+        orient = 'index',
+        columns = cols
+    )
 
+    dfp = pd.DataFrame.from_dict(
+        pr,
+        orient = 'index',
+        columns = cols
+    )
+        
+    dfr.to_csv(
+        Path(output_data_path, "roc" + name + ".csv"),
+        index = True,
+        sep = "\t"
+    )
+    
+    dfp.to_csv(
+        Path(output_data_path, "pr" + name + ".csv"),
+        index = True,
+        sep = "\t"
+    )
+            
 
 def run_experiement(
     algorithm_classes,
@@ -461,11 +506,11 @@ def sort_results_by(results, key, output_path):
     df = pd.DataFrame(data)
     df = df.sort_values(by=key, ascending=False)
 
-    df.to_csv(
-        output_file_path,
-        index=False,
-        sep="\t",
-    )
+    # df.to_csv(
+    #     output_file_path,
+    #     index=False,
+    #     sep="\t",
+    # )
 
     algorithm_tuple_list = sorted(algorithm_tuple_list, key=itemgetter(1), reverse=True)
 

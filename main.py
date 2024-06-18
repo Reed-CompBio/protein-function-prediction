@@ -47,7 +47,7 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 100
+    sample_size = 1000
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
@@ -85,15 +85,15 @@ def main():
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
     }
 
-    repeats = 1
+    repeats = 20
 
     run_workflow(
         algorithm_classes,
         go_protein_pairs,
         sample_size,
         protein_list,
-        testing_graph_file_path,
-        testing_input_directory_path,
+        graph_file_path,
+        dataset_directory_path,
         output_data_path,
         output_image_path,
         repeats,
