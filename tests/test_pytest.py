@@ -82,6 +82,7 @@ def test_algorithm_experiment():
         output_image_path,
         False,
         False,
+        0
     )
     roc_results = {
         "OverlappingNeighbors": 0.6000000000000001,
@@ -110,3 +111,42 @@ def test_algorithm_experiment():
 
     for algorithm, metrics in results.items():
         assert metrics["pr_auc"] == pr_results[algorithm]
+
+def test_multiple_input_files():
+    if not os.path.exists("output"):
+        os.makedirs("output")
+    if not os.path.exists("output/dataset"):
+        os.makedirs("output/dataset")
+    if not os.path.exists("output/data"):
+        os.makedirs("output/data")
+    if not os.path.exists("output/images"):
+        os.makedirs("output/images")
+
+    output_data_path = Path("./output/data/")
+    output_image_path = Path("./output/images/")
+    input_directory_path = Path("./tests/testing-dataset/")
+    graph_file_path = Path(input_directory_path, "graph.pickle")
+
+    algorithm_classes = {
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2,
+    }
+
+    df = run_workflow(
+        algorithm_classes,
+        "N/A",
+        10,
+        "N/A",
+        graph_file_path,
+        input_directory_path,
+        output_data_path,
+        output_image_path,
+        5,
+        False,
+    )

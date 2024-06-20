@@ -74,6 +74,7 @@ class OverlappingNeighborsV2(BaseAlgorithm):
                     G, positive_pro_pro_neighbor, positive_go
                 )
             ) - c
+
             positive_score = positive_go_annotated_pro_pro_neighbor_count + (
                 1
                 + (len(positive_pro_pro_neighbor) - c)
@@ -93,6 +94,9 @@ class OverlappingNeighborsV2(BaseAlgorithm):
                     G, negative_pro_pro_neighbor, negative_go
                 )
             )
+
+            
+            
             negative_score = negative_go_annotated_pro_pro_neighbor_count + (
                 1
                 + (len(negative_pro_pro_neighbor) - c)

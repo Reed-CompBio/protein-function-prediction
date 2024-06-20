@@ -58,43 +58,13 @@ def run_workflow(
     for i in algorithm_classes.keys():
         auc[i] = [[], []]
 
-    #Creates a list of all files in the given dataset directory and removes any pos/neg files listed higher than the number of replicates (rep_<num>_ indicates the replicate number)
-    data_dir = sorted(os.listdir(dataset_directory_path))
-    reps = [[],[]] #List of numbers within range at index 0 and out of range at index 1
-    files = {'positive': {},
-       'negative': {}
-        } 
-    for i in data_dir: 
-        temp = i.split("_")
-        if temp[0] == 'rep':
-            rep_num = int(temp[1])
-            if temp[2] == 'positive':
-                files['positive'][rep_num] = i
-                if int(temp[1]) < x:
-                    reps[0].append(rep_num)
-                else:
-                    reps[1].append(rep_num)
-            elif temp[2] == 'negative':
-                files['negative'][rep_num] = i
-    #Removes any of the out of range files 
-    for i in reps[1]:
-        del_file_path_pos = Path(dataset_directory_path, files['positive'][i])
-        del_file_path_neg = Path(dataset_directory_path, files['negative'][i])
-        os.remove(del_file_path_pos)
-        os.remove(del_file_path_neg)
-
-    #Generates positive and negative lists for a replicate if it doesn't already exist in the directory
+    #Sorts through replicates in directory and returns number of dataset pairs
     if new_random_lists == False:
-        #reps index 0 is keep and exists, index 1 is to remove
-        for i in range(0,x):
-            if i not in reps[0]:
-                positive_dataset, negative_dataset = sample_data(
-                    go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, (i)
-                )
-                print("\nGenerated a positive and a negative dataset for replicate " + str(i))
+        x = use_existing_samples(dataset_directory_path)
 
-    #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
+    #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not, removes any files that are out of range
     else:
+        remove_out_of_range_samples(x, dataset_directory_path)
         for i in range(x):
             positive_dataset, negative_dataset = sample_data(
                 go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, (i)
@@ -192,7 +162,7 @@ def run_workflow(
         index = True,
         sep = "\t"
     )
-            
+    return auc        
 
 def run_experiement(
     algorithm_classes,
@@ -564,3 +534,76 @@ def sort_results_by(results, key, output_path):
     for algorithm in algorithm_tuple_list:
         sorted_results[algorithm[0]] = results[algorithm[0]]
     return sorted_results
+
+def remove_out_of_range_samples(x, dataset_directory_path):
+    """
+    Removes any samples that are out of range when generating all new samples
+
+    Parameters:
+
+    x {int}: the number of replicates
+    dataset_directory_path {Path}: path to the dataset directory where samples are stored
+    
+    Returns:
+    Null
+
+    """
+    data_dir = sorted(os.listdir(dataset_directory_path))
+    remove = [] 
+    files = {'positive': {},
+       'negative': {}
+        } 
+    for i in data_dir:
+        temp = i.split("_")
+        if temp[0] == 'rep':
+            rep_num = int(temp[1])
+            if temp[2] == 'positive':
+                files['positive'][rep_num] = i
+                if int(rep_num) >= x:
+                    remove.append(rep_num)
+            elif temp[2] == 'negative':
+                files['negative'][rep_num] = i
+                
+    for i in remove:
+        del_file_path_pos = Path(dataset_directory_path, files['positive'][i])
+        del_file_path_neg = Path(dataset_directory_path, files['negative'][i])
+        os.remove(del_file_path_pos)
+        os.remove(del_file_path_neg)
+
+
+def use_existing_samples(dataset_directory_path):
+    """
+    Sorts through repititions and renames files to ensure they are 0-x with one step between
+
+    Parameters:
+
+    dataset_directory_path {Path}: path to the dataset directory where samples are stored
+    
+    Returns:
+    the number of repititions in the directory {int}
+
+    """
+    data_dir = sorted(os.listdir(dataset_directory_path))
+    nums = [] 
+    for i in data_dir:
+        temp = i.split("_")
+        if temp[0] == 'rep':
+            rep_num = int(temp[1])
+            if temp[2] == 'positive':
+                nums.append(rep_num)
+    nums = sorted(nums)
+    n = len(nums)
+    r = range(n)
+    for i in r:
+        if i not in nums:
+            n = nums[-1]
+            pos = "rep_" + str(i) + "_positive_protein_go_term_pairs.csv"
+            neg = "rep_" + str(i) + "_negative_protein_go_term_pairs.csv"
+            pos_old_path = Path(dataset_directory_path, "rep_" + str(n) + "_positive_protein_go_term_pairs.csv")
+            neg_old_path = Path(dataset_directory_path, "rep_" + str(n) + "_negative_protein_go_term_pairs.csv")
+            pos_new_path = Path(dataset_directory_path, pos)
+            neg_new_path = Path(dataset_directory_path, neg)
+            os.rename(pos_old_path, pos_new_path)
+            os.rename(neg_old_path, neg_new_path)
+            nums.pop()
+    return n

@@ -47,8 +47,8 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 1000
-    repeats = 5
+    sample_size = 10
+    repeats = 10
     new_random_lists = False
 
     testing_output_data_path = Path("./output/data/")
@@ -61,11 +61,11 @@ def main():
     go_term_type = [namespace[2]]
 
     interactome_columns = [0, 1]
-    interactome = read_specific_columns(bsub_interactome_path, interactome_columns, ",")
+    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
 
     go_inferred_columns = [0, 2, 3]
     go_protein_pairs = read_pro_go_data(
-        bsub_go_association_path, go_inferred_columns, go_term_type, ","
+        fly_go_association_path, go_inferred_columns, go_term_type, ","
     )
 
     protein_list = []
