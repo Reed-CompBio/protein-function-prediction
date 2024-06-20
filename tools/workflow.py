@@ -14,6 +14,7 @@ from random import sample
 import pandas as pd
 from operator import itemgetter
 import statistics as stat
+import os
 
 
 def run_workflow(
@@ -26,6 +27,7 @@ def run_workflow(
     output_data_path,
     output_image_path,
     repeats,
+    new_random_lists,
 ):
     """
     With a given set of algorithms, test the algorithms ability to prediction protein function on a given number of
@@ -41,6 +43,7 @@ def run_workflow(
     output_data_path {Path} : path of the output data
     output_image_path {Path} : path of the output image
     repeats {int} : the number of experiment repetitions
+    new_random_list {bool} : flag True to generate completely new pos/neg lists, False to use pre-existing ones 
 
     Returns:
     Null
@@ -55,15 +58,54 @@ def run_workflow(
     for i in algorithm_classes.keys():
         auc[i] = [[], []]
 
-    #Generate number of datasets if they don't already exist 
-    
+    #Creates a list of all files in the given dataset directory and removes any pos/neg files listed higher than the number of replicates (rep_<num>_ indicates the replicate number)
+    data_dir = sorted(os.listdir(dataset_directory_path))
+    reps = [[],[]] #List of numbers within range at index 0 and out of range at index 1
+    files = {'positive': {},
+       'negative': {}
+        } 
+    for i in data_dir: 
+        temp = i.split("_")
+        if temp[0] == 'rep':
+            rep_num = int(temp[1])
+            if temp[2] == 'positive':
+                files['positive'][rep_num] = i
+                if int(temp[1]) < x:
+                    reps[0].append(rep_num)
+                else:
+                    reps[1].append(rep_num)
+            elif temp[2] == 'negative':
+                files['negative'][rep_num] = i
+    #Removes any of the out of range files 
+    for i in reps[1]:
+        del_file_path_pos = Path(dataset_directory_path, files['positive'][i])
+        del_file_path_neg = Path(dataset_directory_path, files['negative'][i])
+        os.remove(del_file_path_pos)
+        os.remove(del_file_path_neg)
+
+    #Generates positive and negative lists for a replicate if it doesn't already exist in the directory
+    if new_random_lists == False:
+        #reps index 0 is keep and exists, index 1 is to remove
+        for i in range(0,x):
+            if i not in reps[0]:
+                positive_dataset, negative_dataset = sample_data(
+                    go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, (i)
+                )
+                print("\nGenerated a positive and a negative dataset for replicate " + str(i))
+
+    #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
+    else:
+        for i in range(x):
+            positive_dataset, negative_dataset = sample_data(
+                go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, (i)
+            )
 
     
     for i in range(
         x
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
         if x > 1:
-            print("\n\nReplicate: " + str(i+1) + "\n")
+            print("\n\nReplicate: " + str(i) + "\n")
 
         # positive_dataset, negative_dataset = sample_data(
         #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
@@ -77,6 +119,7 @@ def run_workflow(
             output_image_path,
             True,
             print_graphs,
+            i,
         )
 
         # each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
@@ -96,7 +139,6 @@ def run_workflow(
         cols = []
         for i in range(x):
             cols.append("Replicate " + str(i+1))
-        name = "_replicate_list"
         
         # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
         for i in auc.keys():
@@ -126,7 +168,6 @@ def run_workflow(
         )
     else:
         cols = ["AUC"]
-        name = "_auc_results"
         
     dfr = pd.DataFrame.from_dict(
         roc,
@@ -141,13 +182,13 @@ def run_workflow(
     )
         
     dfr.to_csv(
-        Path(output_data_path, "roc" + name + ".csv"),
+        Path(output_data_path, "roc_auc_results.csv"),
         index = True,
         sep = "\t"
     )
     
     dfp.to_csv(
-        Path(output_data_path, "pr" + name + ".csv"),
+        Path(output_data_path, "pr_auc_results.csv"),
         index = True,
         sep = "\t"
     )
@@ -161,6 +202,7 @@ def run_experiement(
     output_image_path,
     threshold,
     figures,
+    rep_num,
 ):
     """
     Run an iteration with a sample dataset on all the algorithms, calculating their protein prediction scores
@@ -171,6 +213,7 @@ def run_experiement(
     graph_file_path {Path} : path of the exported nx graph
     output_data_path {Path} : path of the output data
     output_image_path {Path} : path of the output image
+    rep_num {int} : replicate number to use associated pos/neg dataset
 
     Returns:
     Results {dictionary} : contains a key value pair where each association algorithms is a key and their values are the metrics and threshold results
@@ -184,7 +227,7 @@ def run_experiement(
         print("")
         print(f"{i} / {len(algorithm_classes)}: {algorithm_name} Algorithm")
         current = run_algorithm(
-            algorithm_class, input_directory_path, graph_file_path, output_data_path
+            algorithm_class, input_directory_path, graph_file_path, output_data_path, rep_num,
         )
         current = run_metrics(current)
         results[algorithm_name] = current
@@ -205,6 +248,7 @@ def run_algorithm(
     input_directory_path,
     graph_file_path,
     output_data_path,
+    rep_num,
 ):
     """
     With a given dataset, run an algorithm's predict method.
@@ -223,7 +267,7 @@ def run_algorithm(
 
     # Predict using the algorithm
     y_score, y_true = algorithm.predict(
-        input_directory_path, graph_file_path, output_data_path
+        input_directory_path, graph_file_path, output_data_path, rep_num,
     )
 
     # Access y_true and y_score attributes for evaluation
@@ -390,7 +434,7 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
     plt.show()
 
 
-def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_path):
+def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_path, num):
     """
     Given a sample size, generate positive nad negative datasets.
 
@@ -401,6 +445,7 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
     protein_list {list} : a list of all proteins in the graph
     G {nx.Graph} : graph that represents the interactome and go term connections
     input_directory_path {Path} : Path to directory of the datasets
+    num : Number of positive/negative dataset
 
     Returns:
     positive_dataset, negative_dataset
@@ -429,12 +474,12 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
     negative_df = pd.DataFrame(negative_dataset)
 
     positive_df.to_csv(
-        Path(input_directory_path, "positive_protein_go_term_pairs.csv"),
+        Path(input_directory_path, "rep_" + str(num) + "_positive_protein_go_term_pairs.csv"),
         index=False,
         sep="\t",
     )
     negative_df.to_csv(
-        Path(input_directory_path, "negative_protein_go_term_pairs.csv"),
+        Path(input_directory_path, "rep_" + str(num) + "_negative_protein_go_term_pairs.csv"),
         index=False,
         sep="\t",
     )
@@ -442,13 +487,14 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
     return positive_dataset, negative_dataset
 
 
-def get_datasets(input_directory_path):
+def get_datasets(input_directory_path, rep_num):
     """
     get the positive and negative datasets as lists by reading their csv files
 
     Parameters:
 
     input_directory_path {Path} : Path to directory of the datasets
+    rep_num {int} : Replicate number to specify which positive and negative list to use
 
     Returns:
     positive_dataset, negative_dataset
@@ -457,7 +503,7 @@ def get_datasets(input_directory_path):
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
     with open(
-        Path(input_directory_path, "positive_protein_go_term_pairs.csv"), "r"
+        Path(input_directory_path, "rep_" + str(rep_num) + "_positive_protein_go_term_pairs.csv"), "r"
     ) as file:
         next(file)
         for line in file:
@@ -467,7 +513,7 @@ def get_datasets(input_directory_path):
             positive_dataset["go"].append(parts[1])
 
     with open(
-        Path(input_directory_path, "negative_protein_go_term_pairs.csv"), "r"
+        Path(input_directory_path, "rep_" + str(rep_num) + "_negative_protein_go_term_pairs.csv"), "r"
     ) as file:
         next(file)
         for line in file:

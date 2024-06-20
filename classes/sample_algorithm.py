@@ -31,6 +31,7 @@ class SampleAlgorithm(BaseAlgorithm):
         input_directory_path,
         graph_file_path,
         output_data_directory,
+        rep_num,
     ):
         """
         evaluate a random approach method on a protein protein interaction network with go term annotation.
@@ -44,7 +45,7 @@ class SampleAlgorithm(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num)
         G = import_graph_from_pickle(graph_file_path)
 
         i = 1

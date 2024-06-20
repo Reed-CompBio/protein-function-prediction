@@ -28,6 +28,7 @@ class OverlappingNeighborsV2(BaseAlgorithm):
         input_directory_path,
         graph_file_path,
         output_path,
+        rep_num,
     ):
         """
         evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
@@ -50,7 +51,7 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num)
 
         G = import_graph_from_pickle(graph_file_path)
         i = 1

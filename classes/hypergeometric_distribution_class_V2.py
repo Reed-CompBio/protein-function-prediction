@@ -31,6 +31,7 @@ class HypergeometricDistributionV2(BaseAlgorithm):
         input_directory_path,
         graph_file_path,
         output_path,
+        rep_num,
     ):
         """
         Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of 
@@ -54,7 +55,7 @@ class HypergeometricDistributionV2(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num)
         G = import_graph_from_pickle(graph_file_path)
 
         i = 1
