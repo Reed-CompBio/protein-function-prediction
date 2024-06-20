@@ -82,6 +82,7 @@ def test_algorithm_experiment():
         output_image_path,
         False,
         False,
+        0,
     )
     roc_results = {
         "OverlappingNeighbors": 0.6000000000000001,
