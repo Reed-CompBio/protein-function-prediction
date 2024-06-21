@@ -28,6 +28,7 @@ def run_workflow(
     output_image_path,
     repeats,
     new_random_lists,
+    name,
 ):
     """
     With a given set of algorithms, test the algorithms ability to prediction protein function on a given number of
@@ -44,6 +45,7 @@ def run_workflow(
     output_image_path {Path} : path of the output image
     repeats {int} : the number of experiment repetitions
     new_random_list {bool} : flag True to generate completely new pos/neg lists, False to use pre-existing ones 
+    name {str} : a string of namespaces chosen to be used in the sample
 
     Returns:
     Null
@@ -58,16 +60,16 @@ def run_workflow(
     for i in algorithm_classes.keys():
         auc[i] = [[], []]
 
-    #Sorts through replicates in directory and returns number of dataset pairs
+    #Sorts through replicates in directory and returns number of dataset pairs, needs to be formatted and ordered corectly
     if new_random_lists == False:
         x = use_existing_samples(dataset_directory_path)
 
-    #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not, removes any files that are out of range
+    #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
-        remove_out_of_range_samples(x, dataset_directory_path)
+        remove_samples(x, dataset_directory_path)
         for i in range(x):
             positive_dataset, negative_dataset = sample_data(
-                go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, (i)
+                go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, i, name
             )
 
     
@@ -90,12 +92,13 @@ def run_workflow(
             True,
             print_graphs,
             i,
+            name,
         )
-
+        
         # each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
         for i in algorithm_classes.keys():
-            auc[i][0].append(round(results[i]["roc_auc"],5))
-            auc[i][1].append(round(results[i]["pr_auc"],5))
+            auc[i][0].append(results[i]["roc_auc"]) #round(results[i]["roc_auc"],5))
+            auc[i][1].append(results[i]["pr_auc"]) #round(results[i]["pr_auc"],5))
 
     #Creates a dictionary for all pr values and all roc values 
     roc = {}
@@ -108,7 +111,7 @@ def run_workflow(
     if x > 1:
         cols = []
         for i in range(x):
-            cols.append("Replicate " + str(i+1))
+            cols.append("Replicate " + str(i))
         
         # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
         for i in auc.keys():
@@ -173,6 +176,7 @@ def run_experiement(
     threshold,
     figures,
     rep_num,
+    name,
 ):
     """
     Run an iteration with a sample dataset on all the algorithms, calculating their protein prediction scores
@@ -184,6 +188,7 @@ def run_experiement(
     output_data_path {Path} : path of the output data
     output_image_path {Path} : path of the output image
     rep_num {int} : replicate number to use associated pos/neg dataset
+    name {str} : namespaces used to create the sample datasets
 
     Returns:
     Results {dictionary} : contains a key value pair where each association algorithms is a key and their values are the metrics and threshold results
@@ -197,7 +202,7 @@ def run_experiement(
         print("")
         print(f"{i} / {len(algorithm_classes)}: {algorithm_name} Algorithm")
         current = run_algorithm(
-            algorithm_class, input_directory_path, graph_file_path, output_data_path, rep_num,
+            algorithm_class, input_directory_path, graph_file_path, output_data_path, rep_num, name,
         )
         current = run_metrics(current)
         results[algorithm_name] = current
@@ -219,6 +224,7 @@ def run_algorithm(
     graph_file_path,
     output_data_path,
     rep_num,
+    name,
 ):
     """
     With a given dataset, run an algorithm's predict method.
@@ -228,6 +234,9 @@ def run_algorithm(
     input_directory_path {Path} : path of positive and negative datasets
     graph_file_path {Path} : path of the exported nx graph
     output_data_path {Path} : path of the output data
+    rep_num {int} : replicate number to use associated pos/neg dataset
+    name {str} : namespaces used to create the sample datasets
+    
 
     Returns:
     Result {dict} : a dictionary that stores the y_true and y_score values of the algorithm
@@ -237,7 +246,7 @@ def run_algorithm(
 
     # Predict using the algorithm
     y_score, y_true = algorithm.predict(
-        input_directory_path, graph_file_path, output_data_path, rep_num,
+        input_directory_path, graph_file_path, output_data_path, rep_num, name,
     )
 
     # Access y_true and y_score attributes for evaluation
@@ -404,7 +413,7 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
     plt.show()
 
 
-def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_path, num):
+def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name):
     """
     Given a sample size, generate positive nad negative datasets.
 
@@ -415,7 +424,8 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
     protein_list {list} : a list of all proteins in the graph
     G {nx.Graph} : graph that represents the interactome and go term connections
     input_directory_path {Path} : Path to directory of the datasets
-    num : Number of positive/negative dataset
+    num {int} : Number of positive/negative dataset
+    name {str} : shorthand for all namespaces used to generate datasets, adds shorthand to .csv name
 
     Returns:
     positive_dataset, negative_dataset
@@ -442,14 +452,14 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
 
     positive_df = pd.DataFrame(positive_dataset)
     negative_df = pd.DataFrame(negative_dataset)
-
+    
     positive_df.to_csv(
-        Path(input_directory_path, "rep_" + str(num) + "_positive_protein_go_term_pairs.csv"),
+        Path(input_directory_path, "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv"),
         index=False,
         sep="\t",
     )
     negative_df.to_csv(
-        Path(input_directory_path, "rep_" + str(num) + "_negative_protein_go_term_pairs.csv"),
+        Path(input_directory_path, "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv"),
         index=False,
         sep="\t",
     )
@@ -457,7 +467,7 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
     return positive_dataset, negative_dataset
 
 
-def get_datasets(input_directory_path, rep_num):
+def get_datasets(input_directory_path, rep_num, name):
     """
     get the positive and negative datasets as lists by reading their csv files
 
@@ -465,6 +475,7 @@ def get_datasets(input_directory_path, rep_num):
 
     input_directory_path {Path} : Path to directory of the datasets
     rep_num {int} : Replicate number to specify which positive and negative list to use
+    name {str} : string of namespaces contained in the .csv file name
 
     Returns:
     positive_dataset, negative_dataset
@@ -473,7 +484,7 @@ def get_datasets(input_directory_path, rep_num):
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
     with open(
-        Path(input_directory_path, "rep_" + str(rep_num) + "_positive_protein_go_term_pairs.csv"), "r"
+        Path(input_directory_path, "rep_" + str(rep_num) + "_positive_protein_go_term_pairs" + name + ".csv"), "r"
     ) as file:
         next(file)
         for line in file:
@@ -483,7 +494,7 @@ def get_datasets(input_directory_path, rep_num):
             positive_dataset["go"].append(parts[1])
 
     with open(
-        Path(input_directory_path, "rep_" + str(rep_num) + "_negative_protein_go_term_pairs.csv"), "r"
+        Path(input_directory_path, "rep_" + str(rep_num) + "_negative_protein_go_term_pairs" + name + ".csv"), "r"
     ) as file:
         next(file)
         for line in file:
@@ -535,9 +546,9 @@ def sort_results_by(results, key, output_path):
         sorted_results[algorithm[0]] = results[algorithm[0]]
     return sorted_results
 
-def remove_out_of_range_samples(x, dataset_directory_path):
+def remove_samples(x, dataset_directory_path):
     """
-    Removes any samples that are out of range when generating all new samples
+    Removes all old samples before creating new ones (to ensure no issues when changing namespaces)
 
     Parameters:
 
@@ -559,8 +570,7 @@ def remove_out_of_range_samples(x, dataset_directory_path):
             rep_num = int(temp[1])
             if temp[2] == 'positive':
                 files['positive'][rep_num] = i
-                if int(rep_num) >= x:
-                    remove.append(rep_num)
+                remove.append(rep_num)
             elif temp[2] == 'negative':
                 files['negative'][rep_num] = i
                 
@@ -593,17 +603,4 @@ def use_existing_samples(dataset_directory_path):
                 nums.append(rep_num)
     nums = sorted(nums)
     n = len(nums)
-    r = range(n)
-    for i in r:
-        if i not in nums:
-            n = nums[-1]
-            pos = "rep_" + str(i) + "_positive_protein_go_term_pairs.csv"
-            neg = "rep_" + str(i) + "_negative_protein_go_term_pairs.csv"
-            pos_old_path = Path(dataset_directory_path, "rep_" + str(n) + "_positive_protein_go_term_pairs.csv")
-            neg_old_path = Path(dataset_directory_path, "rep_" + str(n) + "_negative_protein_go_term_pairs.csv")
-            pos_new_path = Path(dataset_directory_path, pos)
-            neg_new_path = Path(dataset_directory_path, neg)
-            os.rename(pos_old_path, pos_new_path)
-            os.rename(neg_old_path, neg_new_path)
-            nums.pop()
     return n
