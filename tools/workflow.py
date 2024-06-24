@@ -165,7 +165,9 @@ def run_workflow(
         index = True,
         sep = "\t"
     )
-    return auc        
+    if x > 1:
+        replicate_boxplot(roc, output_image_path, True)
+        replicate_boxplot(pr, output_image_path, False)
 
 def run_experiement(
     algorithm_classes,
@@ -604,3 +606,44 @@ def use_existing_samples(dataset_directory_path):
     nums = sorted(nums)
     n = len(nums)
     return n
+
+def replicate_boxplot(auc_list, output_image_path, curve):
+    """
+    Creates a boxplot using replicates of the AUC value for ROC or PR curves
+
+    Parameters:
+
+    auc_list {dict}: either ROC or PR dictionary containing the list of AUC values for each replicate
+    output_image_path {Path} : output path to save the graph
+    curve {bool} : either True for ROC or False for PR 
+    
+    Returns:
+    NULL
+
+    """
+    graph = []
+    col_names = ["ON", "ON2", "ON3", "PD", "PD2", "PD3", "SA", "HD", "HD2"]
+    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "darkturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    len_keys = len(auc_list.keys())
+    ran = random.randrange(len(colors)-len_keys)
+    colors = colors[ran:ran+len_keys]
+    for i in auc_list:
+        graph.append(auc_list[i])
+    
+    fig, ax = plt.subplots()
+    ax.set_ylabel("AUC")
+    
+    plot = ax.boxplot(graph, 
+                      patch_artist = True,
+                      tick_labels = col_names)
+    
+    for patch, color in zip(plot['boxes'], colors):
+        patch.set_facecolor(color)
+    
+    if curve == True:
+        plt.title("ROC replicates")
+        plt.savefig(Path(output_image_path, "roc_replicate_boxplot.png"))
+    else:
+        plt.title("PR replicates")
+        plt.savefig(Path(output_image_path, "pr_replicate_boxplot.png"))
+    plt.show()
