@@ -53,6 +53,8 @@ def run_workflow(
     G = import_graph_from_pickle(graph_file_path)
     x = repeats  # Number of replicates
     print_graphs = True
+    run_thresholds = True
+
     if x > 1:
         print_graphs = False
     auc = {}
@@ -63,6 +65,10 @@ def run_workflow(
     #Sorts through replicates in directory and returns number of dataset pairs, needs to be formatted and ordered corectly
     if new_random_lists == False:
         x = use_existing_samples(dataset_directory_path)
+        # edge case where we want to print the graph when there are 1 dataset pair
+        if x == 1:
+            print_graphs = True
+
 
     #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
@@ -89,7 +95,7 @@ def run_workflow(
             graph_file_path,
             output_data_path,
             output_image_path,
-            True,
+            run_thresholds,
             print_graphs,
             i,
             name,
@@ -189,6 +195,8 @@ def run_experiement(
     graph_file_path {Path} : path of the exported nx graph
     output_data_path {Path} : path of the output data
     output_image_path {Path} : path of the output image
+    threshold {bool} : run thresholding 
+    figures {bool} : generate figures 
     rep_num {int} : replicate number to use associated pos/neg dataset
     name {str} : namespaces used to create the sample datasets
 
