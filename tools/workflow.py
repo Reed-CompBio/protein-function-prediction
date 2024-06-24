@@ -1,6 +1,7 @@
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from tools.helper import print_progress
 from sklearn.metrics import f1_score
+from colorama import Fore, Style
 import numpy as np
 from tools.helper import (
     add_print_statements,
@@ -15,6 +16,7 @@ import pandas as pd
 from operator import itemgetter
 import statistics as stat
 import os
+import sys
 
 
 def run_workflow(
@@ -29,6 +31,7 @@ def run_workflow(
     repeats,
     new_random_lists,
     name,
+    print_graphs,
 ):
     """
     With a given set of algorithms, test the algorithms ability to prediction protein function on a given number of
@@ -46,15 +49,14 @@ def run_workflow(
     repeats {int} : the number of experiment repetitions
     new_random_list {bool} : flag True to generate completely new pos/neg lists, False to use pre-existing ones 
     name {str} : a string of namespaces chosen to be used in the sample
+    print_graphs {bool} : true if graphs should be printed (any), false if not
 
     Returns:
     Null
     """
     G = import_graph_from_pickle(graph_file_path)
     x = repeats  # Number of replicates
-    print_graphs = True
-    run_thresholds = True
-
+    # print_graphs = True
     if x > 1:
         print_graphs = False
     auc = {}
@@ -65,10 +67,6 @@ def run_workflow(
     #Sorts through replicates in directory and returns number of dataset pairs, needs to be formatted and ordered corectly
     if new_random_lists == False:
         x = use_existing_samples(dataset_directory_path)
-        # edge case where we want to print the graph when there are 1 dataset pair
-        if x == 1:
-            print_graphs = True
-
 
     #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
@@ -95,7 +93,7 @@ def run_workflow(
             graph_file_path,
             output_data_path,
             output_image_path,
-            run_thresholds,
+            True,
             print_graphs,
             i,
             name,
@@ -171,7 +169,7 @@ def run_workflow(
         index = True,
         sep = "\t"
     )
-    if x > 1:
+    if x > 1 & print_graphs == True:
         replicate_boxplot(roc, output_image_path, True)
         replicate_boxplot(pr, output_image_path, False)
 
@@ -195,8 +193,6 @@ def run_experiement(
     graph_file_path {Path} : path of the exported nx graph
     output_data_path {Path} : path of the output data
     output_image_path {Path} : path of the output image
-    threshold {bool} : run thresholding 
-    figures {bool} : generate figures 
     rep_num {int} : replicate number to use associated pos/neg dataset
     name {str} : namespaces used to create the sample datasets
 
@@ -493,15 +489,19 @@ def get_datasets(input_directory_path, rep_num, name):
     """
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
-    with open(
-        Path(input_directory_path, "rep_" + str(rep_num) + "_positive_protein_go_term_pairs" + name + ".csv"), "r"
-    ) as file:
-        next(file)
-        for line in file:
-            parts = line.strip().split("\t")
-            # print(parts[0])
-            positive_dataset["protein"].append(parts[0])
-            positive_dataset["go"].append(parts[1])
+    try:
+        with open(
+            Path(input_directory_path, "rep_" + str(rep_num) + "_positive_protein_go_term_pairs" + name + ".csv"), "r"
+        ) as file:
+            next(file)
+            for line in file:
+                parts = line.strip().split("\t")
+                # print(parts[0])
+                positive_dataset["protein"].append(parts[0])
+                positive_dataset["go"].append(parts[1])
+    except:
+        print(Fore.RED + "\nFile not found: ensure given namespaces match positive and negative file namespaces\n")
+        sys.exit(1)
 
     with open(
         Path(input_directory_path, "rep_" + str(rep_num) + "_negative_protein_go_term_pairs" + name + ".csv"), "r"

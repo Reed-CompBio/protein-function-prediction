@@ -153,6 +153,7 @@ def test_multiple_input_files():
         5,
         False,
         "_mol_bio_cel",
+        False,
     )
     roc_mean_results = {
         "OverlappingNeighbors": 0.640,

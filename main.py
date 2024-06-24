@@ -49,7 +49,8 @@ def main():
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 10
     repeats = 10
-    new_random_lists = True
+    new_random_lists = False
+    figures = True
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
@@ -58,7 +59,7 @@ def main():
 
     namespace = ["molecular_function", "biological_process", "cellular_component"]
     # change the go_term_type variable to include which go term namespace you want
-    go_term_type = [namespace[0], namespace[1], namespace[2]]
+    go_term_type = [namespace[0], namespace[2]]
     short_name = ""
     if namespace[0] in go_term_type:
         short_name = short_name + "_mol"
@@ -106,6 +107,7 @@ def main():
         repeats,
         new_random_lists,
         short_name,
+        print_graphs,
     )
 
     sys.exit()
