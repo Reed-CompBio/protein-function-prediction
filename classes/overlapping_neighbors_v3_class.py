@@ -28,6 +28,8 @@ class OverlappingNeighborsV3(BaseAlgorithm):
         input_directory_path,
         graph_file_path,
         output_path,
+        rep_num,
+        name,
     ):
         """
         evaluate overlapping neighbors method on a protein protein interaction network with go term annotation.
@@ -51,7 +53,7 @@ class OverlappingNeighborsV3(BaseAlgorithm):
         }
         i = 1
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         G = import_graph_from_pickle(graph_file_path)
 
         for positive_protein, positive_go, negative_protein, negative_go in zip(
@@ -60,6 +62,9 @@ class OverlappingNeighborsV3(BaseAlgorithm):
             negative_dataset["protein"],
             negative_dataset["go"],
         ):
+            c = 0
+            if G.has_edge(positive_protein, positive_protein):
+                c = 1
             # calculate the score for the positive set
             positive_pro_pro_neighbor = get_neighbors(
                 G, positive_protein, "protein_protein"
@@ -69,7 +74,7 @@ class OverlappingNeighborsV3(BaseAlgorithm):
                 get_go_annotated_pro_pro_neighbor_count(
                     G, positive_pro_pro_neighbor, positive_go
                 )
-            )
+            ) - c
             positive_score = positive_go_annotated_pro_pro_neighbor_count + (
                 1 + positive_go_annotated_pro_pro_neighbor_count
             ) / (len(positive_go_neighbor))
@@ -83,7 +88,7 @@ class OverlappingNeighborsV3(BaseAlgorithm):
                 get_go_annotated_pro_pro_neighbor_count(
                     G, negative_pro_pro_neighbor, negative_go
                 )
-            )
+            ) 
             negative_score = negative_go_annotated_pro_pro_neighbor_count + (
                 1 + negative_go_annotated_pro_pro_neighbor_count
             ) / (len(negative_go_neighbor))

@@ -31,6 +31,8 @@ class ProteinDegree(BaseAlgorithm):
         input_directory_path,
         graph_file_path,
         output_path,
+        rep_num,
+        name,
     ):
         colorama_init()
         data = {
@@ -41,7 +43,7 @@ class ProteinDegree(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         G = import_graph_from_pickle(graph_file_path)
 
         i = 1
@@ -52,14 +54,20 @@ class ProteinDegree(BaseAlgorithm):
             negative_dataset["go"],
         ):
 
+            c = 0 
+            if G.has_edge(positive_protein, positive_protein):
+                c = 1
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
-            data["degree"].append(G.degree(positive_protein))
+            data["degree"].append(G.degree(positive_protein) - c)
             data["true_label"].append(1)
 
+            c = 0
+            if G.has_edge(negative_protein, negative_protein):
+                c = 1
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
-            data["degree"].append(G.degree(negative_protein))
+            data["degree"].append(G.degree(negative_protein) - c)
             data["true_label"].append(0)
             print_progress(i, len(positive_dataset["protein"]))
             i += 1

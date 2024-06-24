@@ -35,6 +35,8 @@ class ProteinDegreeV2(BaseAlgorithm):
         input_directory_path,
         graph_file_path,
         output_path,
+        rep_num,
+        name,
     ):
         data = {
             "protein": [],
@@ -44,7 +46,7 @@ class ProteinDegreeV2(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path)
+        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         G = import_graph_from_pickle(graph_file_path)
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
@@ -54,17 +56,23 @@ class ProteinDegreeV2(BaseAlgorithm):
             negative_dataset["go"],
         ):
 
+            c = 0
+            if G.has_edge(positive_protein, positive_protein):
+                c = 1
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
             data["degree"].append(
-                len(get_neighbors(G, positive_protein, "protein_protein"))
+                len(get_neighbors(G, positive_protein, "protein_protein")) - c
             )
             data["true_label"].append(1)
 
+            c = 0
+            if G.has_edge(negative_protein, negative_protein):
+                c = 1
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
             data["degree"].append(
-                len(get_neighbors(G, negative_protein, "protein_protein"))
+                len(get_neighbors(G, negative_protein, "protein_protein")) - c
             )
             data["true_label"].append(0)
             print_progress(i, len(positive_dataset["protein"]))

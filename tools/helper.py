@@ -39,17 +39,17 @@ def create_ppi_network(fly_interactome, fly_GO_term):
 
     # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
     for line in fly_interactome:
-        if not G.has_node(line[2]):
-            G.add_node(line[2], name=line[0], type="protein")
-            protein_list.append({"id": line[2], "name": line[0]})
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
 
-        if not G.has_node(line[3]):
-            G.add_node(line[3], name=line[1], type="protein")
-            protein_list.append({"id": line[3], "name": line[1]})
+        if not G.has_node(line[1]):
+            G.add_node(line[1], name=line[1], type="protein")
+            protein_list.append({"id": line[1], "name": line[1]})
             protein_node += 1
 
-        G.add_edge(line[2], line[3], type="protein_protein")
+        G.add_edge(line[0], line[1], type="protein_protein")
         protein_protein_edge += 1
         print_progress(i, total_progress)
         i += 1
@@ -105,6 +105,27 @@ def read_specific_columns(file_path, columns, delimit):
         return None
 
 
+def read_pro_go_data(file_path, columns, namespace, delimit):
+    try:
+        with open(file_path, "r") as file:
+            next(file)
+            data = []
+            for line in file:
+                parts = line.strip().split(delimit)
+                selected_columns = []
+                for col in columns:
+                    selected_columns.append(parts[col].replace('"', ""))
+                if selected_columns[2] in namespace:
+                    data.append(selected_columns)
+            return data
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
 def generate_random_colors(num_colors):
     colors = []
     for _ in range(num_colors):
@@ -145,10 +166,10 @@ def add_print_statements(filename, statements):
 
 
 def export_graph_to_pickle(graph, filename):
-    with open(filename, 'wb') as f:
+    with open(filename, "wb") as f:
         pickle.dump(graph, f)
 
 
 def import_graph_from_pickle(filename):
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         return pickle.load(f)

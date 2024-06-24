@@ -7,24 +7,22 @@ from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
-from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
-from classes.hypergeometric_distribution_class_V4 import HypergeometricDistributionV4
 
 import matplotlib.pyplot as plt
 from random import sample
 from pathlib import Path
-from tools.helper import print_progress
 import os
 import sys
 import pandas as pd
+import statistics as stat
 from colorama import init as colorama_init
 from tools.helper import (
     create_ppi_network,
     read_specific_columns,
-    print_progress,
     export_graph_to_pickle,
+    read_pro_go_data,
 )
-from tools.workflow import run_workflow, sample_data
+from tools.workflow import run_workflow
 
 
 def main():
@@ -38,37 +36,51 @@ def main():
     if not os.path.exists("output/images"):
         os.makedirs("output/images")
 
-    interactome_path = Path("./network/interactome-flybase-collapsed-weighted.txt")
-    go_association_path = Path("./network/fly_proGo.csv")
+    fly_interactome_path = Path("./network/fly_propro.csv")
+    fly_go_association_path = Path("./network/fly_proGo.csv")
+    zfish_interactome_path = Path("./network/zfish_propro.csv")
+    zfish_go_association_path = Path("./network/zfish_proGo.csv")
+    bsub_interactome_path = Path("./network/bsub_propro.csv")
+    bsub_go_association_path = Path("./network/bsub_proGo.csv")
+
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 1000
+    sample_size = 10
+    repeats = 5
+    new_random_lists = True
+    print_graphs = True
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
     testing_input_directory_path = Path("./tests/testing-dataset/")
     testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
-    
-    interactome_columns = [0, 1, 4, 5]
-    interactome = read_specific_columns(interactome_path, interactome_columns, "\t")
 
-    go_inferred_columns = [0, 2]
-    go_protein_pairs = read_specific_columns(
-        go_association_path, go_inferred_columns, ","
+    namespace = ["molecular_function", "biological_process", "cellular_component"]
+    # change the go_term_type variable to include which go term namespace you want
+    go_term_type = [namespace[0], namespace[1], namespace[2]]
+    short_name = ""
+    if namespace[0] in go_term_type:
+        short_name = short_name + "_mol"
+    if namespace[1] in go_term_type:
+        short_name = short_name + "_bio"
+    if namespace[2] in go_term_type:
+        short_name = short_name + "_cel"
+
+    interactome_columns = [0, 1]
+    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
+
+    go_inferred_columns = [0, 2, 3]
+    go_protein_pairs = read_pro_go_data(
+        fly_go_association_path, go_inferred_columns, go_term_type, ","
     )
 
     protein_list = []
 
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
-    # G, protein_list = create_ppi_network(interactome, go_protein_pairs)
-    # export_graph_to_pickle(G, graph_file_path)
-
-    # if there is no sample dataset, uncomment the following lines. otherwise, the dataset in outputs will be used
-    # positive_dataset, negative_dataset = sample_data(
-    #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-    # )
+    G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+    export_graph_to_pickle(G, graph_file_path)
 
     # Define algorithm classes and their names
     algorithm_classes = {
@@ -81,18 +93,21 @@ def main():
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
-        "HypergeometricDistributionV3": HypergeometricDistributionV3,
-        "HypergeometricDistributionV4": HypergeometricDistributionV4,
     }
 
-    results = run_workflow(
+    run_workflow(
         algorithm_classes,
-        testing_input_directory_path,
-        testing_graph_file_path,
-        testing_output_data_path,
-        testing_output_image_path,
-        True,
-        True,
+        go_protein_pairs,
+        sample_size,
+        protein_list,
+        graph_file_path,
+        dataset_directory_path,
+        output_data_path,
+        output_image_path,
+        repeats,
+        new_random_lists,
+        short_name,
+        print_graphs,
     )
 
     sys.exit()
