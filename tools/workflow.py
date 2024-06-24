@@ -31,7 +31,7 @@ def run_workflow(
     repeats,
     new_random_lists,
     name,
-    print_graphs,
+    figure,
 ):
     """
     With a given set of algorithms, test the algorithms ability to prediction protein function on a given number of
@@ -49,14 +49,14 @@ def run_workflow(
     repeats {int} : the number of experiment repetitions
     new_random_list {bool} : flag True to generate completely new pos/neg lists, False to use pre-existing ones 
     name {str} : a string of namespaces chosen to be used in the sample
-    print_graphs {bool} : true if graphs should be printed (any), false if not
+    figure {bool} : true if graphs should be printed (any), false if not
 
     Returns:
     Null
     """
     G = import_graph_from_pickle(graph_file_path)
     x = repeats  # Number of replicates
-    # print_graphs = True
+    print_graphs = figure
     if x > 1:
         print_graphs = False
     auc = {}
@@ -169,7 +169,7 @@ def run_workflow(
         index = True,
         sep = "\t"
     )
-    if x > 1 & print_graphs == True:
+    if x > 1 & figure == True:
         replicate_boxplot(roc, output_image_path, True)
         replicate_boxplot(pr, output_image_path, False)
 
