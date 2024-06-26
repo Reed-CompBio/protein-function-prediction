@@ -67,6 +67,8 @@ def run_workflow(
     #Sorts through replicates in directory and returns number of dataset pairs, needs to be formatted and ordered corectly
     if new_random_lists == False:
         x = use_existing_samples(dataset_directory_path)
+        if x == 1:
+            print_graphs = True
 
     #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
@@ -368,7 +370,12 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
     """
     # Generate ROC and PR figures to compare methods
 
-    colors = generate_random_colors(len(algorithm_classes))
+    # colors = generate_random_colors(len(algorithm_classes))
+    col_names = ["ON", "ON2", "ON3", "PD", "PD2", "PD3", "SA", "HD", "HD2"]
+    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "paleturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    len_keys = len(algorithm_classes)
+    ran = random.randrange(len(colors)-len_keys)
+    colors = colors[ran:ran+len_keys]
 
     sorted_results = sort_results_by(results, "roc_auc", output_data_path)
     # Initialize your parameters
@@ -631,7 +638,7 @@ def replicate_boxplot(auc_list, output_image_path, curve):
     """
     graph = []
     col_names = ["ON", "ON2", "ON3", "PD", "PD2", "PD3", "SA", "HD", "HD2"]
-    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "darkturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "paleturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
     len_keys = len(auc_list.keys())
     ran = random.randrange(len(colors)-len_keys)
     colors = colors[ran:ran+len_keys]
@@ -655,3 +662,47 @@ def replicate_boxplot(auc_list, output_image_path, curve):
         plt.title("PR replicates")
         plt.savefig(Path(output_image_path, "pr_replicate_boxplot.png"))
     plt.show()
+
+def box_sample_subset(proGo, proLst, upper, lower): 
+    """
+    Subsets the dataset to only contain proteins within a specific range of Go term interactions
+
+    Parameters:
+
+    proGo {list}: a list of protein go term pairs 
+    proLst {list} : a list of protein nodes
+    upper {int} : the upper limit of the number of Go terms, the value itself is not included
+    lower {int} : the lower limit of the number of Go terms, the value itself is included
+    
+    Returns:
+    a list of protein Go term pairs and a list of protein protein pairs, both in the same format as the respective input 
+    list
+
+    """
+    proteins = {} # Number of proteins annotated to each go term
+    for term in proLst:
+        x = term['id']
+        if x not in proteins.keys():
+            proteins[x] = 0
+            
+    for term in proGo:
+        i = term[0]
+        proteins[i] += 1
+        
+    box_dict = {}
+    for i in proteins:
+        if proteins[i] >= lower and proteins[i] < upper: #Includes lower limit, does not include upper limit
+            box_dict[i] = proteins[i]
+
+    keys = box_dict.keys()
+    temp_pro = []
+    for i in proLst:
+        if i['id'] in keys:
+            temp_pro.append(i)
+            
+    temp_go = []
+    for i in proGo:
+        if i[0] in keys:
+            temp_go.append(i)
+
+    return temp_go, temp_pro

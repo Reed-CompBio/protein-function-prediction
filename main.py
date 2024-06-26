@@ -22,7 +22,10 @@ from tools.helper import (
     export_graph_to_pickle,
     read_pro_go_data,
 )
-from tools.workflow import run_workflow
+from tools.workflow import (
+    run_workflow,
+    box_sample_subset,
+)
 
 
 def main():
@@ -47,10 +50,12 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 10
-    repeats = 5
-    new_random_lists = True
+    sample_size = 1000
+    repeats = 10
+    new_random_lists = False
     print_graphs = True
+    upper = 200
+    lower = 100
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
@@ -81,6 +86,8 @@ def main():
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     export_graph_to_pickle(G, graph_file_path)
+
+    go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
 
     # Define algorithm classes and their names
     algorithm_classes = {
