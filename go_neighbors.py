@@ -11,32 +11,38 @@ import os
 
 #The first part of this algorithm does not actually take into account any protein that are not annotated to any go terms
 
-#Go term
-# range_lower = 100
-# range_higher = 500
-# p = 1
-
-#Protein
 range_higher = 200
 range_lower = 100
 p = 0
+print_graphs = False
+
 
 go = read_specific_columns(
         "./network/fly_proGo.csv", [0], ","
     )
-go_terms = {} # Number of proteins annotated to each go term
+pro = read_specific_columns(
+        "./network/fly_propro.csv", [0,1], ","
+    )
+
+proteins = {} # Number of proteins annotated to each go term
+for term in pro:
+    x = term[0]
+    y = term[1]
+    if x not in proteins.keys():
+        proteins[x] = 0
+    if y not in proteins.keys():
+        proteins[y] = 0
+
 for term in go:
     i = term[0]
-    if i in go_terms.keys():
-        go_terms[i] += 1
-    else:
-        go_terms[i] = 1
-lst = [] # A list of frequencies for each go term
-for i in go_terms.keys():
-    lst.append(go_terms[i])
+    proteins[i] += 1
+
+lst = [] # A list of frequencies for go term annotation
+for i in proteins.keys():
+    lst.append(proteins[i])
 lst = sorted(lst) 
 counts = Counter(lst) # The number of times each frequency appears in the list 
-lst_range = range(lst[-1]) #the largest number of proteins annotated to a go term in the lst
+lst_range = range(lst[-1]) #the largest number of go terms annotated to a protein in lst
 
 #Some of this code was pulled from stack overflow
 count_dict = {} #Creates a dictionary with a key from 0 to the number of proteins annotated to the largest GO term
@@ -64,39 +70,23 @@ print("Total number should be " + str(len(lst)) + ", and is: " + str(over + mid 
 count_dict = pd.Series(count_dict)
 x_values = count_dict.index
 
-#Go Term centric plots
-# plt.bar(x_values, count_dict.values)
-# plt.title("Number of GO terms with under 100 protein neighbors")
-# plt.ylim(0, 3000)
-# plt.xlim(0, 100)
-# plt.show()
-# plt.bar(x_values, count_dict.values)
-# plt.title("Number of GO terms with between 100 and 500 protein neighbors")
-# plt.xlim(100,500)
-# plt.ylim(0,15)
-# plt.show()
-# plt.bar(x_values, count_dict.values)
-# plt.title("Number of GO terms with over 500 protein neighbors")
-# plt.xlim(500, 1000)
-# plt.ylim(0,15)
-# plt.show()    
-
-# Protein centric plots
-# plt.bar(x_values, count_dict.values)
-# plt.title("Number of protins with under 100 go term neighbors")
-# plt.ylim(0,700)
-# plt.xlim(0,100)
-# plt.show()
-# plt.bar(x_values, count_dict.values)
-# plt.title("Number of proteins with between 100 and 300 go term neighbors")
-# plt.xlim(100,300)
-# plt.ylim(0,700)
-# plt.show()
-# plt.bar(x_values, count_dict.values)
-# plt.title("Number of proteins with over 300 go term neighbors")
-# plt.xlim(300, 500)
-# plt.ylim(0,15)
-# plt.show()  
+# Each plot has a different y axis for visualization
+if print_graphs:
+    plt.bar(x_values, count_dict.values)
+    plt.title("Number of protins with under 100 go term neighbors")
+    plt.ylim(0,1100)
+    plt.xlim(-1,100)
+    plt.show()
+    plt.bar(x_values, count_dict.values)
+    plt.title("Number of proteins with between 100 and 300 go term neighbors")
+    plt.xlim(100,300)
+    plt.ylim(0,50)
+    plt.show()
+    plt.bar(x_values, count_dict.values)
+    plt.title("Number of proteins with over 300 go term neighbors")
+    plt.xlim(300, 500)
+    plt.ylim(0,5)
+    plt.show()  
 
 def neighbors(dataset, terms, range_higher, range_lower, j):
     c = 0
@@ -140,8 +130,8 @@ for j in range(replicates):
     
     
     name = "Replicate_" + str(j)
-    reps_pos[name] = neighbors(pos, go_terms, range_higher, range_lower, j)
-    reps_neg[name] = neighbors(neg, go_terms, range_higher, range_lower, j)
+    reps_pos[name] = neighbors(pos, proteins, range_higher, range_lower, j)
+    reps_neg[name] = neighbors(neg, proteins, range_higher, range_lower, j)
     # print("Number of Go terms in the positive list with more than 500 neighbors: " + str(above_len))
     # print("Number of Go terms in the positive list with more than 100 and less than 500 neighbors: " + str(between_len))
     # print("Number of Go terms in the positive list with less than 100 neighbors: " + str(below_len))

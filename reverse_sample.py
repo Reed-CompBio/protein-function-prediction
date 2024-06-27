@@ -7,6 +7,7 @@ from tools.helper import (
 from tools.workflow import box_sample_subset
 import pandas as pd
 import random
+import time
 from random import sample
 from pathlib import Path
 
@@ -28,7 +29,7 @@ sample_size = 1000
 upper = 200
 lower = 100
 
-go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
+# go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
 
 # num = 2
 name = "_mol_bio_cel"
@@ -55,22 +56,19 @@ def reverse_sample_data(go_protein_pairs, sample_size, protein_list, G, input_di
     positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
     # sample the data
-    for i in range(sample_size):
-        sample_edge = random.choice(protein_list)
-        s = sample(list(go_protein_pairs), 1)
-        go = s[0][1]
-        
-        while G.has_edge(sample_edge["id"], go):
-            s = sample(list(go_protein_pairs), 1)
-            go = s[0][1]
-        positive_dataset["protein"].append(s[0][0])
-        positive_dataset["go"].append(s[0][1])
-        negative_dataset["protein"].append(sample_edge["id"])
-        negative_dataset["go"].append(s[0][1])
-        # if G.has_edge(sample_edge["id"], s[0][1]):
-        #     print("NEGATIVE EDGE")
-        # if not G.has_edge(s[0][0], s[0][1]):
-        #     print("POSITIVE EDGE DOES NOT EXIST BUT IT SHOULD")
+    for edge in sample(list(protein_list), sample_size):
+        negative_dataset["protein"].append(edge['id'])
+
+    for protein in negative_dataset['protein']:
+        s = random.choice(go_protein_pairs)
+        go = s[1]
+
+        while G.has_edge(protein, go):
+            s = random.choice(go_protein_pairs)
+            go = s[1]
+        positive_dataset["protein"].append(s[0])
+        positive_dataset["go"].append(go)
+        negative_dataset["go"].append(go)
 
     positive_df = pd.DataFrame(positive_dataset)
     negative_df = pd.DataFrame(negative_dataset)

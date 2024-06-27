@@ -54,8 +54,9 @@ def main():
     repeats = 10
     new_random_lists = False
     print_graphs = True
-    upper = 200
-    lower = 100
+    subset_by_go_annotations = False
+    upper = 100
+    lower = 1
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
@@ -87,7 +88,9 @@ def main():
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     export_graph_to_pickle(G, graph_file_path)
 
-    go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
+    if subset_by_go_annotations:
+        go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
+        print("Data has been subset")
 
     # Define algorithm classes and their names
     algorithm_classes = {
