@@ -15,9 +15,9 @@ from random import sample
 import pandas as pd
 from operator import itemgetter
 import statistics as stat
-import time
 import os
 import sys
+import time
 
 
 def run_workflow(
@@ -208,6 +208,7 @@ def run_experiement(
     results = {}
     i = 1
     for algorithm_name, algorithm_class in algorithm_classes.items():
+        start = time.time()
         print("")
         print(f"{i} / {len(algorithm_classes)}: {algorithm_name} Algorithm")
         current = run_algorithm(
@@ -215,6 +216,7 @@ def run_experiement(
         )
         current = run_metrics(current)
         results[algorithm_name] = current
+        print("\nTook " + str(time.time() - start) + " seconds")
         i += 1
 
     if threshold:

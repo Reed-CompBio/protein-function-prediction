@@ -29,7 +29,7 @@ sample_size = 1000
 upper = 200
 lower = 100
 
-# go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
+go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
 
 # num = 2
 name = "_mol_bio_cel"

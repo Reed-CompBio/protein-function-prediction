@@ -7,6 +7,9 @@ from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
+from classes.random_walk_class import RandomWalk
+from classes.random_walk_class_v2 import RandomWalkV2
+from classes.random_walk_class_v3 import RandomWalkV3
 
 import matplotlib.pyplot as plt
 from random import sample
@@ -51,8 +54,8 @@ def main():
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 1000
-    repeats = 10
-    new_random_lists = False
+    repeats = 2
+    new_random_lists = True
     print_graphs = True
     subset_by_go_annotations = False
     upper = 100
@@ -81,6 +84,9 @@ def main():
     go_protein_pairs = read_pro_go_data(
         fly_go_association_path, go_inferred_columns, go_term_type, ","
     )
+    # go_protein_pairs = read_specific_columns(
+    #     "./network/gene_association.fb", [1,4], "\t"
+    # )
 
     protein_list = []
 
@@ -103,6 +109,9 @@ def main():
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
+        # "RandomWalk": RandomWalk,
+        # "RandomWalkV2": RandomWalkV2,
+        # "RandomWalkV3": RandomWalkV3,
     }
 
     run_workflow(

@@ -9,17 +9,25 @@ from collections import Counter
 import pandas as pd
 import os
 
+
 #The first part of this algorithm does not actually take into account any protein that are not annotated to any go terms
 
-range_higher = 200
-range_lower = 100
+range_higher = 75
+range_lower = 25
 p = 0
 print_graphs = False
 
 
+# go = read_specific_columns(
+#         "./network/fly_proGo.csv", [0], ","
+#     )
+
+#Without inferred edges
 go = read_specific_columns(
-        "./network/fly_proGo.csv", [0], ","
-    )
+    "./network/gene_association.fb", [1], "\t"
+)
+print(go)
+
 pro = read_specific_columns(
         "./network/fly_propro.csv", [0,1], ","
     )
@@ -35,7 +43,10 @@ for term in pro:
 
 for term in go:
     i = term[0]
-    proteins[i] += 1
+    if i in proteins.keys():
+        proteins[i] += 1
+    else:
+        proteins[i] = 1
 
 lst = [] # A list of frequencies for go term annotation
 for i in proteins.keys():

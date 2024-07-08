@@ -8,10 +8,10 @@ from decimal import Decimal
 
 #Compares inferred ROC and PR values given two datasets, code requires both to have been run with the same algorithms and saved in an auc_values_<name> file
 
-a = pd.read_csv("./output/data/10_repeated_auc_values_standard.csv")
-a_name = "Normal Sampling"
-b = pd.read_csv("./output/data/10_repeated_auc_values_reverse_100_to_200.csv")
-b_name = "Reverse Sampling with Range from 100 to 200"
+a = pd.read_csv("./output/data/10_repeated_auc_values.csv")
+a_name = "Version 1"
+b = pd.read_csv("./output/data/Sampling Test Outputs/10_repeated_auc_values_paired_protein.csv")
+b_name = "Version 2"
 
 k = list(a)[0]
 keys = k.split('\t')
