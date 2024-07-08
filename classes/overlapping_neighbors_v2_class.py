@@ -52,7 +52,9 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
+        positive_dataset, negative_dataset = get_datasets(
+            input_directory_path, rep_num, name
+        )
 
         G = import_graph_from_pickle(graph_file_path)
         i = 1
@@ -62,9 +64,6 @@ class OverlappingNeighborsV2(BaseAlgorithm):
             negative_dataset["protein"],
             negative_dataset["go"],
         ):
-            c = 0
-            if G.has_edge(positive_protein, positive_protein):
-                c = 1
             # calculate the score for the positive set
             positive_pro_pro_neighbor = get_neighbors(
                 G, positive_protein, "protein_protein"
@@ -74,17 +73,14 @@ class OverlappingNeighborsV2(BaseAlgorithm):
                 get_go_annotated_pro_pro_neighbor_count(
                     G, positive_pro_pro_neighbor, positive_go
                 )
-            ) - c
+            )
 
             positive_score = positive_go_annotated_pro_pro_neighbor_count + (
                 1
-                + (len(positive_pro_pro_neighbor) - c)
+                + (len(positive_pro_pro_neighbor))
                 * positive_go_annotated_pro_pro_neighbor_count
             ) / (len(positive_go_neighbor) / 2)
 
-            c = 0 
-            if G.has_edge(negative_protein, negative_protein):
-                c = 1
             # calculate the score for the negative set
             negative_pro_pro_neighbor = get_neighbors(
                 G, negative_protein, "protein_protein"
@@ -96,11 +92,9 @@ class OverlappingNeighborsV2(BaseAlgorithm):
                 )
             )
 
-            
-            
             negative_score = negative_go_annotated_pro_pro_neighbor_count + (
                 1
-                + (len(negative_pro_pro_neighbor) - c)
+                + (len(negative_pro_pro_neighbor))
                 * negative_go_annotated_pro_pro_neighbor_count
             ) / (len(negative_go_neighbor) / 2)
 

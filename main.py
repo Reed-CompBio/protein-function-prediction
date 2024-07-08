@@ -48,7 +48,7 @@ def main():
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 10
-    repeats = 5
+    repeats = 2
     new_random_lists = True
     print_graphs = True
 
