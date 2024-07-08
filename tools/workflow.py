@@ -643,7 +643,7 @@ def replicate_boxplot(auc_list, output_image_path, curve):
     
     plot = ax.boxplot(graph, 
                       patch_artist = True,
-                      tick_labels = col_names)
+                      labels = col_names)
     
     for patch, color in zip(plot['boxes'], colors):
         patch.set_facecolor(color)
