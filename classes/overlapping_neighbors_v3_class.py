@@ -72,9 +72,12 @@ class OverlappingNeighborsV3(BaseAlgorithm):
                     G, positive_pro_pro_neighbor, positive_go
                 )
             )
-            positive_score = positive_go_annotated_pro_pro_neighbor_count + (
-                1 + positive_go_annotated_pro_pro_neighbor_count
-            ) / (len(positive_go_neighbor))
+            if len(positive_go_neighbor) == 0:
+                positive_score = 0
+            else:
+                positive_score = positive_go_annotated_pro_pro_neighbor_count + (
+                    1 + positive_go_annotated_pro_pro_neighbor_count
+                ) / (len(positive_go_neighbor))
 
             # calculate the score for the negative set
             negative_pro_pro_neighbor = get_neighbors(
@@ -86,9 +89,12 @@ class OverlappingNeighborsV3(BaseAlgorithm):
                     G, negative_pro_pro_neighbor, negative_go
                 )
             ) 
-            negative_score = negative_go_annotated_pro_pro_neighbor_count + (
-                1 + negative_go_annotated_pro_pro_neighbor_count
-            ) / (len(negative_go_neighbor))
+            if len(negative_go_neighbor) == 0:
+                negative_score = 0
+            else:
+                negative_score = negative_go_annotated_pro_pro_neighbor_count + (
+                    1 + negative_go_annotated_pro_pro_neighbor_count
+                ) / (len(negative_go_neighbor))
 
             # input positive and negative score to data
             data["protein"].append(positive_protein)
