@@ -77,15 +77,11 @@ class HypergeometricDistributionV2(BaseAlgorithm):
                     G, positive_pro_pro_neighbor, positive_go
                 )
             )
-
-            c = 1
-            if G.has_edge(positive_protein, positive_protein):
-                c = 0
                 
             N = len([x for x,y in G.nodes(data=True) if y['type']=="protein"]) #Total number of protein nodes in the entire graph
-            pos_n = len(positive_pro_pro_neighbor) + c #Number of protein neighbors the protein of interest has (includes the protein of interest)
+            pos_n = len(positive_pro_pro_neighbor) + 1 #Number of protein neighbors the protein of interest has (includes the protein of interest)
             K = len(positive_go_neighbor) #Number of protein neighbors the GO term of interest has, same for pos & neg
-            pos_k = positive_go_annotated_pro_pro_neighbor_count + c #The overlap between the GO protein neighbors and protein neighbors of the protein of interest (includes the protein of interest)
+            pos_k = positive_go_annotated_pro_pro_neighbor_count  + 1 #The overlap between the GO protein neighbors and protein neighbors of the protein of interest (includes the protein of interest)
 
             #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
             positive_score = 1 - ((math.comb(K,pos_k)*math.comb(N-K,pos_n-pos_k))/math.comb(N,pos_n))
@@ -100,12 +96,8 @@ class HypergeometricDistributionV2(BaseAlgorithm):
                     G, negative_pro_pro_neighbor, negative_go
                 )
             )
-
-            c = 1
-            if G.has_edge(negative_protein, negative_protein):
-                c = 0
                 
-            neg_n = len(negative_pro_pro_neighbor) + c #Negative protein of interest neighbors (includes self)
+            neg_n = len(negative_pro_pro_neighbor) + 1 #Negative protein of interest neighbors (includes self)
             neg_k = negative_go_annotated_protein_neighbor_count #Overlap betweesn go neighbors and protein neighbors (should be fewer for neg than pos)
 
             negative_score = 1 - ((math.comb(K,neg_k)*math.comb(N-K,neg_n-neg_k))/math.comb(N,neg_n))
