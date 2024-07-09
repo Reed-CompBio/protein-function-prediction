@@ -10,6 +10,7 @@ from classes.hypergeometric_distribution_class_V2 import HypergeometricDistribut
 from classes.random_walk_class import RandomWalk
 from classes.random_walk_class_v2 import RandomWalkV2
 from classes.random_walk_class_v3 import RandomWalkV3
+from classes.random_walk_class_v4 import RandomWalkV4
 
 import matplotlib.pyplot as plt
 from random import sample
@@ -21,14 +22,12 @@ import statistics as stat
 from colorama import init as colorama_init
 from tools.helper import (
     create_ppi_network,
+    create_only_protein_network,
     read_specific_columns,
     export_graph_to_pickle,
     read_pro_go_data,
 )
-from tools.workflow import (
-    run_workflow,
-    box_sample_subset,
-)
+from tools.workflow import run_workflow
 
 
 def main():
@@ -54,12 +53,9 @@ def main():
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
     sample_size = 1000
-    repeats = 2
-    new_random_lists = True
-    print_graphs = True
-    subset_by_go_annotations = False
-    upper = 100
-    lower = 1
+    repeats = 1
+    new_random_lists = False
+    print_graphs = False
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
@@ -93,25 +89,24 @@ def main():
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     export_graph_to_pickle(G, graph_file_path)
-
-    if subset_by_go_annotations:
-        go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
-        print("Data has been subset")
+    P = create_only_protein_network(interactome)
+    export_graph_to_pickle(P, "./output/dataset/protein.pickle")
 
     # Define algorithm classes and their names
     algorithm_classes = {
-        "OverlappingNeighbors": OverlappingNeighbors,
-        "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        "ProteinDegree": ProteinDegree,
-        "ProteinDegreeV2": ProteinDegreeV2,
-        "ProteinDegreeV3": ProteinDegreeV3,
+        # "OverlappingNeighbors": OverlappingNeighbors,
+        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        # "ProteinDegree": ProteinDegree,
+        # "ProteinDegreeV2": ProteinDegreeV2,
+        # "ProteinDegreeV3": ProteinDegreeV3,
         "SampleAlgorithm": SampleAlgorithm,
-        "HypergeometricDistribution": HypergeometricDistribution,
-        "HypergeometricDistributionV2": HypergeometricDistributionV2,
+        # "HypergeometricDistribution": HypergeometricDistribution,
+        # "HypergeometricDistributionV2": HypergeometricDistributionV2,
         # "RandomWalk": RandomWalk,
         # "RandomWalkV2": RandomWalkV2,
         # "RandomWalkV3": RandomWalkV3,
+        # "RandomWalkV4": RandomWalkV4,
     }
 
     run_workflow(
