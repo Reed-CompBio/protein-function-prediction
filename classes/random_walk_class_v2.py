@@ -46,10 +46,12 @@ class RandomWalkV2(BaseAlgorithm):
         positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         G = import_graph_from_pickle(graph_file_path)
 
-        go_list = {}
-        for i in positive_dataset["go"]:
-            go_list[i] = 1
-        p = nx.pagerank(G, alpha=0.85, personalization=go_list)
+        # a = .5 + (.05*rep_num)
+        # print("alpha = " + str(a))
+        # m = 100 + (10*rep_num)
+        # print("max iterations = " + str(m))
+        # t = 0.000001 - (.0000001*rep_num)
+        # print("tolerance = " + str(t))
         
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
@@ -59,6 +61,15 @@ class RandomWalkV2(BaseAlgorithm):
             negative_dataset["go"],
         ):
             
+            G.remove_edge(positive_protein, positive_go)
+            p = nx.pagerank(G, alpha=0.7, personalization={positive_go:1}) 
+            
+            # df = pd.DataFrame.from_dict(p, orient = 'index')
+            # df.to_csv(
+            #     Path("./output/data/Walk Test/test_walk_2_output.csv"),
+            #     index=True,
+            #     sep="\t",
+            # )
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
             data["walk"].append(p[positive_protein])
@@ -68,7 +79,7 @@ class RandomWalkV2(BaseAlgorithm):
             data["go_term"].append(negative_go)
             data["walk"].append(p[negative_protein])
             data["true_label"].append(0)
-
+            G.add_edge(positive_protein, positive_go, type = "protein_go_term")
             print_progress(i, len(positive_dataset["protein"]))
             i += 1
 
@@ -86,7 +97,7 @@ class RandomWalkV2(BaseAlgorithm):
 
         y_score = df["norm_score"].to_list()
         y_true = df["true_label"].to_list()
-
+        
         return y_score, y_true
 
 def normalize(data):

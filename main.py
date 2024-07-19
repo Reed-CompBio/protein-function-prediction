@@ -11,6 +11,7 @@ from classes.random_walk_class import RandomWalk
 from classes.random_walk_class_v2 import RandomWalkV2
 from classes.random_walk_class_v3 import RandomWalkV3
 from classes.random_walk_class_v4 import RandomWalkV4
+from classes.random_walk_class_v5 import RandomWalkV5
 
 import matplotlib.pyplot as plt
 from random import sample
@@ -23,6 +24,7 @@ from colorama import init as colorama_init
 from tools.helper import (
     create_ppi_network,
     create_only_protein_network,
+    create_go_protein_only_network,
     read_specific_columns,
     export_graph_to_pickle,
     read_pro_go_data,
@@ -52,10 +54,10 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    sample_size = 1000
-    repeats = 1
+    sample_size = 100
+    repeats = 10
     new_random_lists = False
-    print_graphs = False
+    print_graphs = True
 
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
@@ -63,15 +65,33 @@ def main():
     testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
 
     namespace = ["molecular_function", "biological_process", "cellular_component"]
-    # change the go_term_type variable to include which go term namespace you want
-    go_term_type = [namespace[0], namespace[1], namespace[2]]
     short_name = ""
-    if namespace[0] in go_term_type:
-        short_name = short_name + "_mol"
-    if namespace[1] in go_term_type:
-        short_name = short_name + "_bio"
-    if namespace[2] in go_term_type:
-        short_name = short_name + "_cel"
+    # change the go_term_type variable to include which go term namespace you want
+    if new_random_lists == False:
+        go_term_type = []
+        data_dir = sorted(os.listdir(dataset_directory_path))
+        for j in data_dir:
+            if j.startswith('rep_0_neg'):
+                file = j
+        file = file.replace(".", "_")
+        file = file.split("_")
+        if "mol" in file:
+            go_term_type.append(namespace[0])
+            short_name = short_name + "_mol"
+        if "bio" in file:
+            go_term_type.append(namespace[1])
+            short_name = short_name + "_bio"
+        if "cel" in file:
+            go_term_type.append(namespace[2])
+            short_name = short_name + "_cel"
+    else: 
+        go_term_type = [namespace[1]]
+        if namespace[0] in go_term_type:
+            short_name = short_name + "_mol"
+        if namespace[1] in go_term_type:
+            short_name = short_name + "_bio"
+        if namespace[2] in go_term_type:
+            short_name = short_name + "_cel"
 
     interactome_columns = [0, 1]
     interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
@@ -89,8 +109,10 @@ def main():
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
     G, protein_list = create_ppi_network(interactome, go_protein_pairs)
     export_graph_to_pickle(G, graph_file_path)
-    P = create_only_protein_network(interactome)
+    P = create_only_protein_network(interactome, go_protein_pairs)
     export_graph_to_pickle(P, "./output/dataset/protein.pickle")
+    D = create_go_protein_only_network(interactome, go_protein_pairs)
+    export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
 
     # Define algorithm classes and their names
     algorithm_classes = {
@@ -100,13 +122,14 @@ def main():
         # "ProteinDegree": ProteinDegree,
         # "ProteinDegreeV2": ProteinDegreeV2,
         # "ProteinDegreeV3": ProteinDegreeV3,
-        "SampleAlgorithm": SampleAlgorithm,
+        # "SampleAlgorithm": SampleAlgorithm,
         # "HypergeometricDistribution": HypergeometricDistribution,
         # "HypergeometricDistributionV2": HypergeometricDistributionV2,
-        # "RandomWalk": RandomWalk,
-        # "RandomWalkV2": RandomWalkV2,
-        # "RandomWalkV3": RandomWalkV3,
-        # "RandomWalkV4": RandomWalkV4,
+        "RandomWalk": RandomWalk, 
+        "RandomWalkV2": RandomWalkV2, 
+        "RandomWalkV3": RandomWalkV3, 
+        "RandomWalkV4": RandomWalkV4, 
+        "RandomWalkV5": RandomWalkV5,
     }
 
     run_workflow(

@@ -5,7 +5,7 @@ from tools.helper import (
     export_graph_to_pickle,
     print_progress,
 )
-from tools.workflow import box_sample_subset
+from tools.workflow import remove_samples
 import pandas as pd
 import random
 import time
@@ -14,9 +14,20 @@ from pathlib import Path
 
 input_directory_path = Path("./output/dataset")
 
+namespace = ["molecular_function", "biological_process", "cellular_component"]
+    # change the go_term_type variable to include which go term namespace you want
+go_term_type = [namespace[1]]
+short_name = ""
+if namespace[0] in go_term_type:
+    short_name = short_name + "_mol"
+if namespace[1] in go_term_type:
+    short_name = short_name + "_bio"
+if namespace[2] in go_term_type:
+    short_name = short_name + "_cel"
+
 go_inferred_columns = [0, 2, 3]
 go_protein_pairs = read_pro_go_data(
-    "./network/fly_proGo.csv", go_inferred_columns, ["molecular_function", "biological_process", "cellular_component"], ","
+    "./network/fly_proGo.csv", go_inferred_columns, go_term_type, ","
 )
 
 interactome_columns = [0, 1]
@@ -27,16 +38,11 @@ protein_list = []
 graph_file_path = Path(input_directory_path, "graph.pickle")
 G, protein_list = create_ppi_network(interactome, go_protein_pairs)
 export_graph_to_pickle(G, graph_file_path)
-sample_size = 1000
-upper = 200
-lower = 100
-pair_type = "both"
-reps = 10
+sample_size = 100
+pair_type = "protein_go"
+reps = 1
 #Options for pair_type: "protein_go", "protein_protein", "both"
 
-# go_protein_pairs, protein_list = box_sample_subset(go_protein_pairs, protein_list, upper, lower)
-
-name = "_mol_bio_cel"
 
 def paired_sample_data(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, name):
     """
@@ -238,6 +244,7 @@ def protein_neighbor_sample_list(proproLst):
 
     return proteins
 
+remove_samples("./output/dataset")
 if pair_type == "protein_protein":
     proteins = protein_neighbor_sample_list(interactome)
 elif pair_type == "protein_go":
@@ -250,10 +257,10 @@ elif pair_type == "both":
     for i in protein_go:
         proteins[i][1] = protein_go[i] 
     for num in range(reps):
-        paired_sample_data_multi_input(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, name)
-        print("Sample " + str(num) + " created")
+        paired_sample_data_multi_input(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, short_name)
+        print(" Sample " + str(num) + " created")
         
 if pair_type != "both":
     for num in range(reps):
-        paired_sample_data(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, name)
-        print("Sample " + str(num) + " created")
+        paired_sample_data(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, short_name)
+        print(" Sample " + str(num) + " created")

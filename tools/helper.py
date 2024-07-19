@@ -49,7 +49,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
             protein_list.append({"id": line[1], "name": line[1]})
             protein_node += 1
 
-        G.add_edge(line[0], line[1], type="protein_protein")
+        G.add_edge(line[0], line[1], weight = 1, type="protein_protein")
         protein_protein_edge += 1
         print_progress(i, total_progress)
         i += 1
@@ -66,7 +66,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
             protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
             
-        G.add_edge(line[1], line[0], type="protein_go_term")
+        G.add_edge(line[1], line[0], weight = 6, type="protein_go_term")
         protein_go_edge += 1
         print_progress(i, total_progress)
         i += 1
@@ -83,10 +83,10 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     print("total node count: ", len(G.nodes()))
 
     return G, protein_list
+    
 
-
-def create_only_protein_network(fly_interactome):
-    print("Initializing network")
+def create_only_protein_network(fly_interactome, fly_GO_term):
+    print("\nInitializing network")
     i = 1
     total_progress = len(fly_interactome)
     G = nx.Graph()
@@ -110,8 +110,62 @@ def create_only_protein_network(fly_interactome):
         protein_protein_edge += 1
         print_progress(i, total_progress)
         i += 1
+    for line in fly_GO_term:
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
+            protein_node += 1
+            
 
     return G #, protein_list
+
+def create_go_protein_only_network(fly_interactome, fly_GO_term):
+    print("\nInitializing network")
+    i = 1
+    total_progress = len(fly_interactome)
+    G = nx.Graph()
+    protein_protein_edge = 0
+    protein_go_edge = 0
+    protein_node = 0
+    go_node = 0
+    protein_list = []
+    go_term_list = []
+
+    # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
+    for line in fly_interactome:
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
+            protein_node += 1
+
+        if not G.has_node(line[1]):
+            G.add_node(line[1], name=line[1], type="protein")
+            protein_list.append({"id": line[1], "name": line[1]})
+            protein_node += 1
+
+        # G.add_edge(line[0], line[1], type="protein_protein")
+        # protein_protein_edge += 1
+        # print_progress(i, total_progress)
+        # i += 1
+
+    # Proteins annotated with a GO term have an edge to a GO term node
+    for line in fly_GO_term:
+        if not G.has_node(line[1]):
+            G.add_node(line[1], type="go_term")
+            go_term_list.append(line[1])# 
+            go_node += 1
+
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
+            protein_node += 1
+            
+        G.add_edge(line[1], line[0], type="protein_go_term")
+        protein_go_edge += 1
+        print_progress(i, total_progress)
+        i += 1
+
+    return G
 
 
 def read_specific_columns(file_path, columns, delimit):

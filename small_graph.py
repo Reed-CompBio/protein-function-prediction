@@ -36,6 +36,7 @@ T.add_node("B")
 T.add_node("C")
 T.add_node("D")
 T.add_node("E")
+T.add_node("F")
 
 # T.add_edge("A", "B")
 # T.add_edge("B", "C")
@@ -43,8 +44,9 @@ T.add_node("E")
 # T.add_edge("C", "D")
 # T.add_edge("C", "E")
 # T.add_edge("D", "E")
-# ["C", "D"]
-c = [["C", "B"],["C", "E"], ["A", "B"], ["B", "A"], ["D", "E"], ["E", "D"], ["B", "D"], ["D", "B"]]
+
+#["C", "D"]
+c = [["C", "B"], ["C", "E"], ["A", "B"], ["B", "A"], ["D", "E"], ["E", "D"], ["B", "D"], ["D", "B"], ["F", "A"], ["A", "F"], ["E", "F"], ["F", "E"]]
 T.add_edges_from(c)
 
 t = nx.pagerank(T, personalization = {"C" : 1})
@@ -63,12 +65,12 @@ for i in t:
     print(x)
 
 fig, ax = plt.subplots()
-nx.draw_networkx(T, with_labels = True, node_size = [300, 300, 500, 300, 300], node_color = lst, cmap = plt.cm.cool)
+nx.draw_networkx(T, with_labels = True, node_size = [300, 300, 500, 300, 300, 300], node_color = lst, cmap = plt.cm.cool)
 
 cbar = plt.colorbar(
     plt.cm.ScalarMappable(cmap=plt.cm.cool, norm=plt.Normalize(vmin, vmax)),
     cax=ax.inset_axes([0.95, 0.1, 0.05, 0.8]),
 )
-plt.savefig(Path("./output/images", "directed_small_graph_with_pagerank_edge_removed.png"))
+plt.savefig(Path("./output/images", "small_graph_with_pagerank_go_both_directed.png"))
 #go back and fixed directed save
 plt.show() 

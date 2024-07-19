@@ -45,7 +45,6 @@ class RandomWalkV3(BaseAlgorithm):
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         G = import_graph_from_pickle(graph_file_path)
-         
 
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
@@ -54,19 +53,32 @@ class RandomWalkV3(BaseAlgorithm):
             negative_dataset["protein"],
             negative_dataset["go"],
         ):
-            G.remove_edge(positive_protein, positive_go)
-            p = nx.pagerank(G, alpha=0.85, personalization={positive_go:1}) 
+            go_neighbors = get_neighbors(G, positive_go, "protein_go_term")
+    
+            go_neighbor_dict = {}
+            for j in go_neighbors:
+                if j[0] != positive_protein:
+                    go_neighbor_dict[j[0]] = 1  
+                G.remove_edge(j[0], positive_go)
+            if len(go_neighbor_dict) != 0:
+                p = nx.pagerank(G, alpha=0.7, personalization=go_neighbor_dict)
+                data["walk"].append(p[positive_protein])
+                data["walk"].append(p[negative_protein])
+            else:
+                data["walk"].append(0)
+                data["walk"].append(0)
             
+
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
-            data["walk"].append(p[positive_protein])
             data["true_label"].append(1)
 
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
-            data["walk"].append(p[negative_protein])
             data["true_label"].append(0)
-            G.add_edge(positive_protein, positive_go)
+            for j in go_neighbors:
+                G.add_edge(j[0], positive_go, type = "protein_go_term")
+            
             print_progress(i, len(positive_dataset["protein"]))
             i += 1
 
@@ -97,3 +109,13 @@ def normalize(data):
 
     normalized_data = (data - min_val) / (max_val - min_val)
     return normalized_data.tolist()
+
+def get_neighbors(G: nx.Graph, node, edgeType):
+    res = G.edges(node, data=True)
+    neighbors = []
+    for edge in res:
+        if edge[2]["type"] == edgeType:
+            neighborNode = [edge[1], edge[2]]
+            neighbors.append(neighborNode)
+
+    return neighbors

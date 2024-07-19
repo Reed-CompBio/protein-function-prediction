@@ -54,7 +54,7 @@ class RandomWalk(BaseAlgorithm):
             negative_dataset["go"],
         ):
             #A random walk with restart, likely using pagerank
-            p = nx.pagerank(G, alpha=0.85, personalization={positive_go:1}) #Try a version where this is generated for every go term simultaneously?
+            p = nx.pagerank(G, alpha=0.7, personalization={positive_go:1}) #Try a version where this is generated for every go term simultaneously?
             
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)

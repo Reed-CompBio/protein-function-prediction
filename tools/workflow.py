@@ -59,6 +59,7 @@ def run_workflow(
     G = import_graph_from_pickle(graph_file_path)
     x = repeats  # Number of replicates
     print_graphs = figure
+    
     if x > 1:
         print_graphs = False
     auc = {}
@@ -71,10 +72,12 @@ def run_workflow(
         x = use_existing_samples(dataset_directory_path)
         if x == 1:
             print_graphs = True
+        else:
+            print_graphs = False
 
     #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
-        remove_samples(x, dataset_directory_path)
+        remove_samples(dataset_directory_path)
         for i in range(x):
             positive_dataset, negative_dataset = sample_data(
                 go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, i, name
@@ -90,7 +93,7 @@ def run_workflow(
         # positive_dataset, negative_dataset = sample_data(
         #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
         # )
-
+    
         results = run_experiement(
             algorithm_classes,
             dataset_directory_path,
@@ -174,8 +177,12 @@ def run_workflow(
         sep = "\t"
     )
     if x > 1 & figure == True:
-        replicate_boxplot(roc, output_image_path, True)
-        replicate_boxplot(pr, output_image_path, False)
+        if len(roc.keys()) == 1:
+            replicate_barplot_only_one_algorithm(roc, output_image_path, True)
+            replicate_barplot_only_one_algorithm(pr, output_image_path, False)
+        else:
+            replicate_boxplot(roc, output_image_path, True)
+            replicate_boxplot(pr, output_image_path, False)
 
 def run_experiement(
     algorithm_classes,
@@ -567,7 +574,7 @@ def sort_results_by(results, key, output_path):
         sorted_results[algorithm[0]] = results[algorithm[0]]
     return sorted_results
 
-def remove_samples(x, dataset_directory_path):
+def remove_samples(dataset_directory_path):
     """
     Removes all old samples before creating new ones (to ensure no issues when changing namespaces)
 
@@ -669,4 +676,45 @@ def replicate_boxplot(auc_list, output_image_path, curve):
     else:
         plt.title("PR replicates")
         plt.savefig(Path(output_image_path, "pr_replicate_boxplot.png"))
+    plt.show()
+
+
+def replicate_barplot_only_one_algorithm(auc_list, output_image_path, curve):
+    """
+    Creates a boxplot using replicates of the AUC value for ROC or PR curves
+
+    Parameters:
+
+    auc_list {dict}: either ROC or PR dictionary containing the list of AUC values for each replicate
+    output_image_path {Path} : output path to save the graph
+    curve {bool} : either True for ROC or False for PR 
+    
+    Returns:
+    NULL
+
+    """
+    l = list(auc_list.keys())
+    l = l[0]
+    graph = auc_list[l]
+    col_names = []
+    for i in range(len(graph)):
+        col_names.append("Rep " + str(i))
+    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "paleturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    len_keys = len(graph)
+    ran = random.randrange(len(colors)-len_keys)
+    colors = colors[ran:ran+len_keys]
+    
+    fig, ax = plt.subplots()
+    ax.set_ylabel("AUC")
+    my_cmap = plt.get_cmap("viridis")
+    plot = ax.bar(col_names,
+                  graph, 
+                  color = colors)
+    
+    if curve == True:
+        plt.title("ROC replicates")
+        plt.savefig(Path(output_image_path, "roc_replicate_barplot.png"))
+    else:
+        plt.title("PR replicates")
+        plt.savefig(Path(output_image_path, "pr_replicate_barplot.png"))
     plt.show()
