@@ -39,6 +39,7 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
 
     # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
     for line in fly_interactome:
+        print(line)
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -56,6 +57,7 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
 
     # Proteins annotated with a GO term have an edge to a GO term node
     for line in fly_GO_term:
+        print(line)
         if not G.has_node(line[1]):
             G.add_node(line[1], type="go_term", weight=go_depth_dict[line[1]])
             go_term_list.append(line[1])
@@ -66,7 +68,7 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
             protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
 
-        G.add_edge(line[1], line[0], type="protein_go_term")
+        G.add_edge(line[1], line[0], weight = go_depth_dict[line[1]], type="protein_go_term")
         protein_go_edge += 1
         print_progress(i, total_progress)
         i += 1
