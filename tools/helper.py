@@ -122,7 +122,7 @@ def create_only_protein_network(fly_interactome, fly_GO_term):
 def create_go_protein_only_network(fly_interactome, fly_GO_term):
     print("\nInitializing network")
     i = 1
-    total_progress = len(fly_interactome)
+    total_progress = len(fly_GO_term)
     G = nx.Graph()
     protein_protein_edge = 0
     protein_go_edge = 0

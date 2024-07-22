@@ -16,7 +16,7 @@ input_directory_path = Path("./output/dataset")
 
 namespace = ["molecular_function", "biological_process", "cellular_component"]
     # change the go_term_type variable to include which go term namespace you want
-go_term_type = [namespace[1]]
+go_term_type = [namespace[0]]
 short_name = ""
 if namespace[0] in go_term_type:
     short_name = short_name + "_mol"
