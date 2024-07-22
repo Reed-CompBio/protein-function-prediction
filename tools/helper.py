@@ -25,7 +25,7 @@ def print_progress(current, total, bar_length=65):
     print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
 
 
-def create_ppi_network(fly_interactome, fly_GO_term):
+def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
     print("Initializing network")
     i = 1
     total_progress = len(fly_interactome) + len(fly_GO_term)
@@ -57,7 +57,7 @@ def create_ppi_network(fly_interactome, fly_GO_term):
     # Proteins annotated with a GO term have an edge to a GO term node
     for line in fly_GO_term:
         if not G.has_node(line[1]):
-            G.add_node(line[1], type="go_term")
+            G.add_node(line[1], type="go_term", weight=go_depth_dict[line[1]])
             go_term_list.append(line[1])
             go_node += 1
 
@@ -117,6 +117,27 @@ def read_pro_go_data(file_path, columns, namespace, delimit):
                     selected_columns.append(parts[col].replace('"', ""))
                 if selected_columns[2] in namespace:
                     data.append(selected_columns)
+            return data
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+    
+def read_go_depth_data(file_path, columns, namespace, delimit):
+    try:
+        print("reading go depth")
+        with open(file_path, "r") as file:
+            next(file)
+            data = {}
+            for line in file:
+                parts = line.strip().split(delimit)
+                selected_columns = []
+                for col in columns:
+                    selected_columns.append(parts[col].replace('"', ""))
+                if selected_columns[1] in namespace:
+                    data[selected_columns[0]] = selected_columns[2]
             return data
     except FileNotFoundError:
         print(f"Error: File '{file_path}' not found.")
