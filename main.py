@@ -28,6 +28,7 @@ from tools.helper import (
     read_specific_columns,
     export_graph_to_pickle,
     read_pro_go_data,
+    read_go_depth_data
 )
 from tools.workflow import run_workflow
 
@@ -43,12 +44,14 @@ def main():
     if not os.path.exists("output/images"):
         os.makedirs("output/images")
 
-    fly_interactome_path = Path("./network/fly_propro.csv")
+    fly_interactome_path = Path("./network/fly_proPro.csv")
     fly_go_association_path = Path("./network/fly_proGo.csv")
-    zfish_interactome_path = Path("./network/zfish_propro.csv")
+    zfish_interactome_path = Path("./network/zfish_proPro.csv")
     zfish_go_association_path = Path("./network/zfish_proGo.csv")
-    bsub_interactome_path = Path("./network/bsub_propro.csv")
+    bsub_interactome_path = Path("./network/bsub_proPro.csv")
     bsub_go_association_path = Path("./network/bsub_proGo.csv")
+    go_depth_path = Path("./network/go_depth.csv")
+
 
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
@@ -104,10 +107,13 @@ def main():
     #     "./network/gene_association.fb", [1,4], "\t"
     # )
 
+    depth_columns = [0,1,2]
+    go_depth_dict = read_go_depth_data(go_depth_path, depth_columns, go_term_type, ',')
+
     protein_list = []
 
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
-    G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+    G, protein_list = create_ppi_network(interactome, go_protein_pairs, go_depth_dict)
     export_graph_to_pickle(G, graph_file_path)
     P = create_only_protein_network(interactome, go_protein_pairs)
     export_graph_to_pickle(P, "./output/dataset/protein.pickle")
