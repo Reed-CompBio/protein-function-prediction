@@ -75,7 +75,7 @@ def run_workflow(
         else:
             print_graphs = False
 
-    #Generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
+    #Remvoes all old positive/negative lists and generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
         remove_samples(dataset_directory_path)
         for i in range(x):
@@ -89,10 +89,6 @@ def run_workflow(
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
         if x > 1:
             print("\n\nReplicate: " + str(i) + "\n")
-
-        # positive_dataset, negative_dataset = sample_data(
-        #     go_protein_pairs, sample_size, protein_list, G, dataset_directory_path
-        # )
     
         results = run_experiement(
             algorithm_classes,
@@ -106,12 +102,12 @@ def run_workflow(
             name,
         )
         
-        # each loop adds the roc and pr values, index 0 for roc and 1 for pr, for each algorithm
+        # each loop adds the roc and pr values for the algorithm, index 0 for roc and 1 for pr
         for i in algorithm_classes.keys():
-            auc[i][0].append(results[i]["roc_auc"]) #round(results[i]["roc_auc"],5))
-            auc[i][1].append(results[i]["pr_auc"]) #round(results[i]["pr_auc"],5))
+            auc[i][0].append(results[i]["roc_auc"])
+            auc[i][1].append(results[i]["pr_auc"])
 
-    #Creates a dictionary for all pr values and all roc values 
+    #Creates a dictionary for all pr values and all roc values and fills it with auc values 
     roc = {}
     pr = {}
 
@@ -152,7 +148,8 @@ def run_workflow(
         )
     else:
         cols = ["AUC"]
-        
+
+    #Below saves full list of roc and pr values
     dfr = pd.DataFrame.from_dict(
         roc,
         orient = 'index',
@@ -176,6 +173,7 @@ def run_workflow(
         index = True,
         sep = "\t"
     )
+    #prints boxplots for replicate values and barplots for replicates with only one algorithm
     if x > 1 & figure == True:
         if len(roc.keys()) == 1:
             replicate_barplot_only_one_algorithm(roc, output_image_path, True)
@@ -473,7 +471,6 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
         negative_dataset["go"].append(go)
         print_progress(i, sample_size)
         i += 1
-
     positive_df = pd.DataFrame(positive_dataset)
     negative_df = pd.DataFrame(negative_dataset)
     
@@ -514,7 +511,6 @@ def get_datasets(input_directory_path, rep_num, name):
             next(file)
             for line in file:
                 parts = line.strip().split("\t")
-                # print(parts[0])
                 positive_dataset["protein"].append(parts[0])
                 positive_dataset["go"].append(parts[1])
     except:
@@ -527,7 +523,6 @@ def get_datasets(input_directory_path, rep_num, name):
         next(file)
         for line in file:
             parts = line.strip().split("\t")
-            # print(parts[0])
             negative_dataset["protein"].append(parts[0])
             negative_dataset["go"].append(parts[1])
 
@@ -560,12 +555,6 @@ def sort_results_by(results, key, output_path):
 
     df = pd.DataFrame(data)
     df = df.sort_values(by=key, ascending=False)
-
-    # df.to_csv(
-    #     output_file_path,
-    #     index=False,
-    #     sep="\t",
-    # )
 
     algorithm_tuple_list = sorted(algorithm_tuple_list, key=itemgetter(1), reverse=True)
 
@@ -648,7 +637,7 @@ def replicate_boxplot(auc_list, output_image_path, curve):
 
     """
     graph = []
-    col_names = [] #"ON", "ON2", "ON3", "PD", "PD2", "PD3", "SA", "HD", "HD2", "RW", "RW2", "RW3"]
+    col_names = []
     for i in list(auc_list.keys()):
         #Pulled Code from w3r
         remove_lower = lambda text: re.sub('[a-z]', '', text)

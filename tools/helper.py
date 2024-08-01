@@ -25,7 +25,7 @@ def print_progress(current, total, bar_length=65):
     print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
 
 
-def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
+def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):  ### Change fly_interactome to interactome
     print("Initializing network")
     i = 1
     total_progress = len(fly_interactome) + len(fly_GO_term)
@@ -39,7 +39,6 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
 
     # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
     for line in fly_interactome:
-        print(line)
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -57,7 +56,6 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):
 
     # Proteins annotated with a GO term have an edge to a GO term node
     for line in fly_GO_term:
-        print(line)
         if not G.has_node(line[1]):
             G.add_node(line[1], type="go_term", weight=go_depth_dict[line[1]])
             go_term_list.append(line[1])
@@ -117,11 +115,19 @@ def create_only_protein_network(fly_interactome, fly_GO_term):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
-            
 
-    return G #, protein_list
+    print("")
+    print("")
+    print("ProPro edge only network summary")
 
-def create_go_protein_only_network(fly_interactome, fly_GO_term):
+    print("protein-protein edge count: ", protein_protein_edge)
+    print("protein node count: ", protein_node)
+    print("total edge count: ", len(G.edges()))
+    print("total node count: ", len(G.nodes()))
+
+    return G
+
+def create_go_protein_only_network(fly_interactome, fly_GO_term, go_depth_dict):
     print("\nInitializing network")
     i = 1
     total_progress = len(fly_GO_term)
@@ -162,11 +168,21 @@ def create_go_protein_only_network(fly_interactome, fly_GO_term):
             protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
             
-        G.add_edge(line[1], line[0], type="protein_go_term")
+        G.add_edge(line[1], line[0], weight = go_depth_dict[line[1]], type="protein_go_term")
         protein_go_edge += 1
         print_progress(i, total_progress)
         i += 1
 
+    print("")
+    print("")
+    print("ProGO edge only network summary")
+
+    print("protein-go edge count: ", protein_go_edge)
+    print("protein node count: ", protein_node)
+    print("go node count: ", go_node)
+    print("total edge count: ", len(G.edges()))
+    print("total node count: ", len(G.nodes()))
+    
     return G
 
 

@@ -34,6 +34,10 @@ class RandomWalkV2(BaseAlgorithm):
         rep_num,
         name,
     ):
+        '''
+        Uses pagerank to calculate the diffusion score for a given positive and negative protein using the GO term as 
+        the personalization. Removes the edge between the positive protein and the GO term. 
+        '''
         colorama_init()
         data = {
             "protein": [],
@@ -66,7 +70,7 @@ class RandomWalkV2(BaseAlgorithm):
             
             # df = pd.DataFrame.from_dict(p, orient = 'index')
             # df.to_csv(
-            #     Path("./output/data/Walk Test/test_walk_2_output.csv"),
+            #     Path("./output/data/Walk Test/GO:0065007_pagerank_output.csv"),
             #     index=True,
             #     sep="\t",
             # )

@@ -4,6 +4,8 @@ from tools.helper import (
     create_ppi_network,
     export_graph_to_pickle,
     print_progress,
+    get_neighbors,
+    read_go_depth_data,
 )
 from tools.workflow import remove_samples
 import pandas as pd
@@ -16,7 +18,7 @@ input_directory_path = Path("./output/dataset")
 
 namespace = ["molecular_function", "biological_process", "cellular_component"]
     # change the go_term_type variable to include which go term namespace you want
-go_term_type = [namespace[0]]
+go_term_type = [namespace[0], namespace[1], namespace[2]]
 short_name = ""
 if namespace[0] in go_term_type:
     short_name = short_name + "_mol"
@@ -34,14 +36,17 @@ interactome_columns = [0, 1]
 interactome = read_specific_columns("./network/fly_propro.csv", interactome_columns, ",")
 protein_list = []
 
+depth_columns = [0,1,2]
+go_depth_dict = read_go_depth_data("./network/go_depth.csv", depth_columns, go_term_type, ',')
+
     # if there is no graph.pickle file in the output/dataset directory, uncomment the following lines
 graph_file_path = Path(input_directory_path, "graph.pickle")
-G, protein_list = create_ppi_network(interactome, go_protein_pairs)
+G, protein_list = create_ppi_network(interactome, go_protein_pairs, go_depth_dict)
 export_graph_to_pickle(G, graph_file_path)
 sample_size = 100
-pair_type = "protein_go"
+pair_type = "depth"
 reps = 1
-#Options for pair_type: "protein_go", "protein_protein", "both"
+#Options for pair_type: "protein_go", "protein_protein", "both", "depth"
 
 
 def paired_sample_data(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, name):
@@ -244,6 +249,29 @@ def protein_neighbor_sample_list(proproLst):
 
     return proteins
 
+def lowest_go_depth(protein_list):
+    """
+    Finds the associated lowest depth go term for each protein in the list
+
+    Parameters:
+    proLst {list} : a list of protein nodes
+    
+    Returns:
+    a dictionary containing the lowest depth go term for all proteins
+
+    """
+    depth_dict = {}
+    for pro in protein_list:
+        pro = pro['id']
+        go_neighbors = get_neighbors(G, pro, "protein_go_term")
+        highest = 0
+        for go in go_neighbors:
+            go = int(go[1]['weight'])
+            if go > highest:
+                highest = go
+        depth_dict[pro] = highest
+    return(depth_dict)
+
 remove_samples("./output/dataset")
 if pair_type == "protein_protein":
     proteins = protein_neighbor_sample_list(interactome)
@@ -259,6 +287,8 @@ elif pair_type == "both":
     for num in range(reps):
         paired_sample_data_multi_input(go_protein_pairs, sample_size, protein_list, proteins, G, input_directory_path, num, short_name)
         print(" Sample " + str(num) + " created")
+elif pair_type == "depth":
+    proteins = lowest_go_depth(protein_list)
         
 if pair_type != "both":
     for num in range(reps):

@@ -6,11 +6,14 @@ import numpy as np
 import pandas as pd
 from decimal import Decimal
 
-#Compares inferred ROC and PR values given two datasets, code requires both to have been run with the same algorithms and saved in an auc_values_<name> file
+'''
+#Compares inferred ROC and PR values given two datasets, code requires both to have been run with the same algorithms and saved in an auc_values formatted file (list of algorithms with mean and sd for both)
+'''
 
-a = pd.read_csv("./output/data/10_repeated_auc_values.csv")
+#Change Names to match datasets 
+a = pd.read_csv("./output/data/<dataset 1>")
 a_name = "Version 1"
-b = pd.read_csv("./output/data/Sampling Test Outputs/10_repeated_auc_values_paired_protein.csv")
+b = pd.read_csv("./output/data/<dataset 2>.csv")
 b_name = "Version 2"
 
 k = list(a)[0]
@@ -47,6 +50,7 @@ df = pd.DataFrame.from_dict(
     columns= cols,
 )
 
+#Somewhat arbitrary color distinctions
 def cellColor(val):
     if val > .09:
         return "royalblue"
@@ -82,7 +86,7 @@ savename = savename.lower().replace(" ", "")
 fig, ax = plt.subplots()
 ax.axis('off')
 ax.axis('tight')
-tab = ax.table(cellText=df.values, rowLabels = rows, colLabels=cols, cellColours = color, bbox = [0, .2, 1, .6])
+tab = ax.table(cellText=df.values, rowLabels = rows, colLabels=cols, cellColours = color, bbox = [0, .1, 1, .7])
 ax.set_title(title, x = .3, y = .82)
 tab.auto_set_font_size(False)
 tab.set_fontsize(7)

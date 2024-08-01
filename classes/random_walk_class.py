@@ -34,6 +34,10 @@ class RandomWalk(BaseAlgorithm):
         rep_num,
         name,
     ):
+        '''
+        Uses pagerank to calculate the diffusion score for a given positive and negative protein using the GO term as 
+        the personalization. Uses the edge between the positive protein and the GO term.
+        '''
         colorama_init()
         data = {
             "protein": [],
