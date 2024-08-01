@@ -2,6 +2,7 @@ from classes.base_algorithm_class import BaseAlgorithm
 import networkx as nx
 import pandas as pd
 import numpy as np
+import os
 from colorama import init as colorama_init
 from colorama import Fore, Back, Style
 from pathlib import Path
@@ -50,7 +51,9 @@ class RandomWalkV4(BaseAlgorithm):
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         G = import_graph_from_pickle(graph_file_path)
-        P = import_graph_from_pickle("./output/dataset/protein.pickle")
+        graph_path = os.path.split(graph_file_path)
+        graph_path = Path(graph_path[0], "protein.pickle")
+        P = import_graph_from_pickle(graph_path)
 
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(
