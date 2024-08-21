@@ -25,11 +25,13 @@ def print_progress(current, total, bar_length=65):
     print(f"\r{color}{progress_bar}{Style.RESET_ALL}", end="")
 
 
-def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):  ### Change fly_interactome to interactome
+def create_ppi_network(
+    fly_interactome, fly_reg, fly_GO_term, go_depth_dict
+):  ### Change fly_interactome to interactome
     print("Initializing network")
     i = 1
     total_progress = len(fly_interactome) + len(fly_GO_term)
-    G = nx.Graph()
+    G = nx.DiGraph()
     protein_protein_edge = 0
     protein_go_edge = 0
     protein_node = 0
@@ -49,7 +51,26 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):  ### Change
             protein_list.append({"id": line[1], "name": line[1]})
             protein_node += 1
 
-        G.add_edge(line[0], line[1], weight = 1, type="protein_protein")
+        G.add_edge(line[0], line[1], weight=1, type="protein_protein")
+        G.add_edge(line[1], line[0], weight=1, type="protein_protein")
+
+        protein_protein_edge += 1
+        print_progress(i, total_progress)
+        i += 1
+
+        # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
+    for line in fly_reg:
+        if not G.has_node(line[0]):
+            G.add_node(line[0], name=line[0], type="protein")
+            protein_list.append({"id": line[0], "name": line[0]})
+            protein_node += 1
+
+        if not G.has_node(line[1]):
+            G.add_node(line[1], name=line[1], type="protein")
+            protein_list.append({"id": line[1], "name": line[1]})
+            protein_node += 1
+
+        G.add_edge(line[0], line[1], weight=1, type="regulatory")
         protein_protein_edge += 1
         print_progress(i, total_progress)
         i += 1
@@ -66,7 +87,9 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):  ### Change
             protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
 
-        G.add_edge(line[1], line[0], weight = go_depth_dict[line[1]], type="protein_go_term")
+        G.add_edge(
+            line[1], line[0], weight=go_depth_dict[line[1]], type="protein_go_term"
+        )
         protein_go_edge += 1
         print_progress(i, total_progress)
         i += 1
@@ -83,7 +106,7 @@ def create_ppi_network(fly_interactome, fly_GO_term, go_depth_dict):  ### Change
     print("total node count: ", len(G.nodes()))
 
     return G, protein_list
-    
+
 
 def create_only_protein_network(fly_interactome, fly_GO_term):
     print("\nInitializing network")
@@ -127,6 +150,7 @@ def create_only_protein_network(fly_interactome, fly_GO_term):
 
     return G
 
+
 def create_go_protein_only_network(fly_interactome, fly_GO_term, go_depth_dict):
     print("\nInitializing network")
     i = 1
@@ -160,15 +184,17 @@ def create_go_protein_only_network(fly_interactome, fly_GO_term, go_depth_dict):
     for line in fly_GO_term:
         if not G.has_node(line[1]):
             G.add_node(line[1], type="go_term")
-            go_term_list.append(line[1])# 
+            go_term_list.append(line[1])  #
             go_node += 1
 
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
             protein_node += 1
-            
-        G.add_edge(line[1], line[0], weight = go_depth_dict[line[1]], type="protein_go_term")
+
+        G.add_edge(
+            line[1], line[0], weight=go_depth_dict[line[1]], type="protein_go_term"
+        )
         protein_go_edge += 1
         print_progress(i, total_progress)
         i += 1
@@ -182,7 +208,7 @@ def create_go_protein_only_network(fly_interactome, fly_GO_term, go_depth_dict):
     print("go node count: ", go_node)
     print("total edge count: ", len(G.edges()))
     print("total node count: ", len(G.nodes()))
-    
+
     return G
 
 
@@ -225,7 +251,8 @@ def read_pro_go_data(file_path, columns, namespace, delimit):
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
-    
+
+
 def read_go_depth_data(file_path, columns, namespace, delimit):
     try:
         print("reading go depth")
