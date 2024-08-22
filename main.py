@@ -49,11 +49,22 @@ def main():
     fly_reg_path = Path("./network/fly_reg.csv")
     fly_go_association_path = Path("./network/fly_proGo.csv")
     fly_go_association_mixed_path = Path("./network/fly_proGo_mixed.csv")
-
     zfish_interactome_path = Path("./network/zfish_proPro.csv")
+    zfish_reg_path = Path("./network/zfish_reg.csv")
     zfish_go_association_path = Path("./network/zfish_proGo.csv")
+    zfish_go_association_mixed_path = Path("./network/zfish_proGo_mixed.csv")
     bsub_interactome_path = Path("./network/bsub_proPro.csv")
+    bsub_reg_path = Path("./network/bsub_reg.csv")
     bsub_go_association_path = Path("./network/bsub_proGo.csv")
+    bsub_go_association_mixed_path = Path("./network/bsub_proGo_mixed.csv")
+    yeast_interactome_path = Path("./network/yeast_proPro.csv")
+    yeast_reg_path = Path("./network/yeast_reg.csv")
+    yeast_go_association_path = Path("./network/yeast_proGo.csv")
+    yeast_go_association_mixed_path = Path("./network/yeast_proGo_mixed.csv")
+    elegans_interactome_path = Path("./network/elegans_proPro.csv")
+    elegans_reg_path = Path("./network/elegans_reg.csv")
+    elegans_go_association_path = Path("./network/elegans_proGo.csv")
+    elegans_go_association_mixed_path = Path("./network/elegans_proGo_mixed.csv")
     go_depth_path = Path("./network/go_depth.csv")
 
 
@@ -109,15 +120,15 @@ def main():
             short_name = short_name + "_cel"
 
     interactome_columns = [0, 1]
-    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
-    regulatory_interactome = read_specific_columns(fly_reg_path, interactome_columns, ",")
+    interactome = read_specific_columns(zfish_interactome_path, interactome_columns, ",")
+    regulatory_interactome = read_specific_columns(zfish_reg_path, interactome_columns, ",")
     go_inferred_columns = [0, 2, 3]
     #Adds relationship_type column
     if no_inferred_edges: 
         go_inferred_columns.append(1)
         
     go_protein_pairs = read_pro_go_data(
-        fly_go_association_mixed_path, go_inferred_columns, go_term_type, ","
+        zfish_go_association_mixed_path, go_inferred_columns, go_term_type, ","
     )
     #Uses relationship_type column to sort through which proGO edges are inferred 
     if no_inferred_edges:
