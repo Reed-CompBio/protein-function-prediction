@@ -51,8 +51,8 @@ class RandomWalkV5(BaseAlgorithm):
 
         positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
         graph_path = os.path.split(graph_file_path)
-        graph_path = Path(graph_path[0], "go_protein.pickle")
-        D = import_graph_from_pickle(graph_path)
+        final_graph_path = Path(graph_path[0], "go_protein.pickle")
+        D = import_graph_from_pickle(final_graph_path)
 
         i = 1
         for positive_protein, positive_go, negative_protein, negative_go in zip(

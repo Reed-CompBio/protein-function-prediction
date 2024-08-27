@@ -71,7 +71,11 @@ class RandomWalkV4(BaseAlgorithm):
                     go_neighbor_dict[j[0]] = 1   
                 p = nx.pagerank(P, alpha=0.7, personalization=go_neighbor_dict)
                 data["walk"].append(p[positive_protein])
-                data["walk"].append(p[negative_protein])
+                if p[negative_protein]:
+                    data["walk"].append(p[negative_protein])
+                else:
+                    data["walk"].append(0)
+
             else:
                 data["walk"].append(0)
                 data["walk"].append(0) #Will probably want to account for this some other way, but this should not cause errors for now
