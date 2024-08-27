@@ -72,13 +72,15 @@ def main():
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
     graph_file_path = Path(dataset_directory_path, "graph.pickle")
-    go_protein_file_path2 = Path(dataset_directory_path, "go_protein.pickle")
+    go_protein_file_path = Path(dataset_directory_path, "go_protein.pickle")
+    protein_file_path = Path(dataset_directory_path, "protein.pickle")
+
     namespace = ["molecular_function", "biological_process", "cellular_component"]
-    sample_size = 50
+    sample_size = 10
     repeats = 1
     new_random_lists = True
     print_graphs = True
-    no_inferred_edges = False
+    no_inferred_edges = True
     go_term_type = [namespace[0],namespace[1],namespace[2]]
     # sample_size: number of samples chosen for positive/negative lists (total is 2xsample_size)
     # repeats: number of times to run all algorithms to obtain an average
@@ -121,15 +123,15 @@ def main():
             short_name = short_name + "_cel"
 
     interactome_columns = [0, 1]
-    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
-    regulatory_interactome = read_specific_columns(fly_reg_path, interactome_columns, ",")
+    interactome = read_specific_columns(elegans_interactome_path, interactome_columns, ",")
+    regulatory_interactome = read_specific_columns(elegans_reg_path, interactome_columns, ",")
     go_inferred_columns = [0, 2, 3]
     #Adds relationship_type column
     if no_inferred_edges: 
         go_inferred_columns.append(1)
         
     go_protein_pairs = read_pro_go_data(
-        fly_go_association_mixed_path, go_inferred_columns, go_term_type, ","
+        elegans_go_association_mixed_path, go_inferred_columns, go_term_type, ","
     )
     #Uses relationship_type column to sort through which proGO edges are inferred 
     if no_inferred_edges:
@@ -146,33 +148,33 @@ def main():
     protein_list = []
 
     # Generate a standard graph using the pro-pro, regulatory, and pro-go interactions
-    # G, protein_list = create_mixed_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
-    # export_graph_to_pickle(G, graph_file_path)
+    G, protein_list = create_mixed_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
+    export_graph_to_pickle(G, graph_file_path)
     # Creates a graph with only protein-protein edges (used for RandomWalkV4)
     # P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
     # export_graph_to_pickle(P, "./output/dataset/protein.pickle")
     # Creates a graph with only protein-GO term edges (used for RandomWalkV5)
-    D, protein_list = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
-    export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
+    # D, protein_list = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
+    # export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
 
     # sys.exit()
     
     # Define algorithm classes and their names
     algorithm_classes = {
-        # "OverlappingNeighbors": OverlappingNeighbors,
-        # "OverlappingNeighborsV2": OverlappingNeighborsV2,
-        # "OverlappingNeighborsV3": OverlappingNeighborsV3,
-        # "ProteinDegree": ProteinDegree,
-        # "ProteinDegreeV2": ProteinDegreeV2,
-        # "ProteinDegreeV3": ProteinDegreeV3,
-        # "SampleAlgorithm": SampleAlgorithm,
-        # "HypergeometricDistribution": HypergeometricDistribution,
-        # "HypergeometricDistributionV2": HypergeometricDistributionV2,
-        # "RandomWalk": RandomWalk, 
-        # "RandomWalkV2": RandomWalkV2, 
-        # "RandomWalkV3": RandomWalkV3, 
+        "OverlappingNeighbors": OverlappingNeighbors,
+        "OverlappingNeighborsV2": OverlappingNeighborsV2,
+        "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "ProteinDegree": ProteinDegree,
+        "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
+        "SampleAlgorithm": SampleAlgorithm,
+        "HypergeometricDistribution": HypergeometricDistribution,
+        "HypergeometricDistributionV2": HypergeometricDistributionV2,
+        "RandomWalk": RandomWalk, 
+        "RandomWalkV2": RandomWalkV2, 
+        "RandomWalkV3": RandomWalkV3, 
         # "RandomWalkV4": RandomWalkV4,   #need protein-only network
-        "RandomWalkV5": RandomWalkV5,     #need protein-goterm only network
+        # "RandomWalkV5": RandomWalkV5,     #need protein-goterm only network
     }
 
     run_workflow(
@@ -180,7 +182,7 @@ def main():
         go_protein_pairs,
         sample_size,
         protein_list,
-        graph_file_path,
+        graph_file_path,       #make sure you have the correct file path
         dataset_directory_path,
         output_data_path,
         output_image_path,

@@ -19,6 +19,8 @@ import os
 import sys
 import time
 import re
+import networkx as nx
+
 
 
 def run_workflow(
@@ -79,7 +81,7 @@ def run_workflow(
     else:
         remove_samples(dataset_directory_path)
         for i in range(x):
-            positive_dataset, negative_dataset = sample_data(
+            positive_dataset, negative_dataset = sample_data_neighbor(
                 go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, i, name
             )
 
@@ -487,6 +489,55 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
 
     return positive_dataset, negative_dataset
 
+def sample_data_neighbor(go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name):
+    """
+    Given a sample size, generate positive nad negative datasets.
+
+    Parameters:
+
+    go_protein_pairs {list} : a list containing the edge between a protein and a go-term e.g. [[protein1, go_term1], [protein2, go_term2], ...]
+    sample_size {int} : the size of a positive/negative dataset to be sampled
+    protein_list {list} : a list of all proteins in the graph
+    G {nx.Graph} : graph that represents the interactome and go term connections
+    input_directory_path {Path} : Path to directory of the datasets
+    num {int} : Number of positive/negative dataset
+    name {str} : shorthand for all namespaces used to generate datasets, adds shorthand to .csv name
+
+    Returns:
+    positive_dataset, negative_dataset
+
+    """
+    positive_dataset = {"protein": [], "go": []}
+    negative_dataset = {"protein": [], "go": []}
+    # sample the data
+    for edge in sample(list(go_protein_pairs), sample_size):
+        positive_dataset["protein"].append(edge[0])
+        positive_dataset["go"].append(edge[1])
+
+    i = 1
+
+    for protein, go in zip(positive_dataset["protein"], positive_dataset["go"]):
+        closest_neighbor = find_closest_neighbor_without_edge(G, protein, go)
+        negative_dataset["protein"].append(closest_neighbor)
+        negative_dataset["go"].append(go)
+        print_progress(i, sample_size)
+        i += 1
+    positive_df = pd.DataFrame(positive_dataset)
+    negative_df = pd.DataFrame(negative_dataset)
+    
+    positive_df.to_csv(
+        Path(input_directory_path, "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv"),
+        index=False,
+        sep="\t",
+    )
+    negative_df.to_csv(
+        Path(input_directory_path, "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv"),
+        index=False,
+        sep="\t",
+    )
+
+    return positive_dataset, negative_dataset
+
 
 def get_datasets(input_directory_path, rep_num, name):
     """
@@ -707,3 +758,24 @@ def replicate_barplot_only_one_algorithm(auc_list, output_image_path, curve):
         plt.title("PR replicates")
         plt.savefig(Path(output_image_path, "pr_replicate_barplot.png"))
     plt.show()
+
+def get_neighbors(G: nx.DiGraph, node, edgeTypes):
+    res = G.edges(node, data=True)
+    neighbors = []
+    for edge in res:
+        if edge[2]["type"] in edgeTypes:
+            neighborNode = [edge[1], edge[2]]
+            neighbors.append(neighborNode) 
+
+    return neighbors
+
+def find_closest_neighbor_without_edge(G, protein1, go_term1):
+    # Use BFS to explore neighbors of protein1
+    for neighbor in nx.bfs_tree(G, protein1):
+        if (neighbor != protein1 and 
+            G.nodes[neighbor].get('type') == 'protein' and 
+            not G.has_edge(neighbor, go_term1)):
+            return neighbor
+    
+    # If all neighbors have an edge to go_term1
+    return None
