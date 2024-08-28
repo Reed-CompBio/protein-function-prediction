@@ -27,11 +27,11 @@ def print_progress(current, total, bar_length=65):
 
 
 def create_mixed_network(
-    fly_interactome, fly_reg, fly_GO_term, go_depth_dict
+    ppi_interactome, reg_interactome, GO_term, go_depth_dict
 ):  ### Change fly_interactome to interactome
     print("Initializing network")
     i = 1
-    total_progress = len(fly_interactome) + len(fly_GO_term)
+    total_progress = len(ppi_interactome) + len(GO_term)
     G = nx.DiGraph()
     protein_protein_edge = 0
     protein_go_edge = 0
@@ -40,8 +40,8 @@ def create_mixed_network(
     protein_list = []
     go_term_list = []
 
-    # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
-    for line in fly_interactome:
+    # go through PPI interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
+    for line in ppi_interactome:
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -59,8 +59,8 @@ def create_mixed_network(
         print_progress(i, total_progress)
         i += 1
 
-        # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
-    for line in fly_reg:
+        # go through regulatory interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
+    for line in reg_interactome:
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -77,7 +77,7 @@ def create_mixed_network(
         i += 1
 
     # Proteins annotated with a GO term have an edge to a GO term node
-    for line in fly_GO_term:
+    for line in GO_term:
         if not G.has_node(line[1]):
             G.add_node(line[1], weight=go_depth_dict[line[1]], type="go_term",)
             go_term_list.append(line[1])
@@ -148,17 +148,17 @@ def create_subnetwork(edge_list, go_annotated_proteins_list):
     return G, protein_list
 
 
-def create_only_protein_network(fly_interactome, fly_reg, fly_GO_term, go_depth_dict):
+def create_only_protein_network(ppi_interactome, reg_interactome, GO_term, go_depth_dict):
     print("\nInitializing network")
     i = 1
-    total_progress = len(fly_interactome)
+    total_progress = len(ppi_interactome)
     G = nx.DiGraph()
     protein_protein_edge = 0
     protein_node = 0
     protein_list = []
 
     # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
-    for line in fly_interactome:
+    for line in ppi_interactome:
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -176,7 +176,7 @@ def create_only_protein_network(fly_interactome, fly_reg, fly_GO_term, go_depth_
         print_progress(i, total_progress)
         i += 1
 
-    for line in fly_reg:
+    for line in reg_interactome:
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -193,7 +193,7 @@ def create_only_protein_network(fly_interactome, fly_reg, fly_GO_term, go_depth_
         protein_protein_edge += 1
         print_progress(i, total_progress)
         i += 1
-    for line in fly_GO_term:
+    for line in GO_term:
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -211,10 +211,10 @@ def create_only_protein_network(fly_interactome, fly_reg, fly_GO_term, go_depth_
     return G, protein_list
 
 
-def create_go_protein_only_network(fly_interactome,regulatory_interactome,fly_GO_term, go_depth_dict):
+def create_go_protein_only_network(ppi_interactome,regulatory_interactome,GO_term, go_depth_dict):
     print("\nInitializing network")
     i = 1
-    total_progress = len(fly_GO_term)
+    total_progress = len(GO_term)
     G = nx.DiGraph()
     protein_protein_edge = 0
     protein_go_edge = 0
@@ -223,8 +223,8 @@ def create_go_protein_only_network(fly_interactome,regulatory_interactome,fly_GO
     protein_list = []
     go_term_list = []
 
-    # go through fly interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
-    for line in fly_interactome:
+    # go through PPI interactome, add a new node if it doesnt exists already, then add their physical interactions as edges
+    for line in ppi_interactome:
         if not G.has_node(line[0]):
             G.add_node(line[0], name=line[0], type="protein")
             protein_list.append({"id": line[0], "name": line[0]})
@@ -252,7 +252,7 @@ def create_go_protein_only_network(fly_interactome,regulatory_interactome,fly_GO
             protein_node += 1
 
     # Proteins annotated with a GO term have an edge to a GO term node
-    for line in fly_GO_term:
+    for line in GO_term:
         if not G.has_node(line[1]):
             G.add_node(line[1], type="go_term")
             go_term_list.append(line[1])  #
@@ -412,11 +412,8 @@ def read_subnetwork(file_path):
                 data = json.loads(
                     line.strip()
                 )  # .strip() removes any leading/trailing whitespace
-                # print(data["p"]["rels"][0]["label"])
                 rel_type = data["p"]["rels"][0]["label"]
-                # print(data["p"]["rels"][0]["start"]["properties"]["id"])
                 start_id = data["p"]["rels"][0]["start"]["properties"]["id"]
-                # print(data["p"]["rels"][0]["end"]["properties"]["id"])
                 end_id = data["p"]["rels"][0]["end"]["properties"]["id"]
 
                 edge = {"start_id": start_id, "end_id": end_id, "rel_type": rel_type}
