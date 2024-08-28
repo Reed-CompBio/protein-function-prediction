@@ -22,7 +22,6 @@ import re
 import networkx as nx
 
 
-
 def run_workflow(
     algorithm_classes,
     go_protein_pairs,
@@ -51,7 +50,7 @@ def run_workflow(
     output_data_path {Path} : path of the output data
     output_image_path {Path} : path of the output image
     repeats {int} : the number of experiment repetitions
-    new_random_list {bool} : flag True to generate completely new pos/neg lists, False to use pre-existing ones 
+    new_random_list {bool} : flag True to generate completely new pos/neg lists, False to use pre-existing ones
     name {str} : a string of namespaces chosen to be used in the sample
     figure {bool} : true if graphs should be printed (any), false if not
 
@@ -61,7 +60,7 @@ def run_workflow(
     G = import_graph_from_pickle(graph_file_path)
     x = repeats  # Number of replicates
     print_graphs = figure
-    
+
     if x > 1:
         print_graphs = False
     auc = {}
@@ -69,7 +68,7 @@ def run_workflow(
     for i in algorithm_classes.keys():
         auc[i] = [[], []]
 
-    #Sorts through replicates in directory and returns number of dataset pairs, needs to be formatted and ordered corectly
+    # Sorts through replicates in directory and returns number of dataset pairs, needs to be formatted and ordered corectly
     if new_random_lists == False:
         x = use_existing_samples(dataset_directory_path)
         if x == 1:
@@ -77,21 +76,26 @@ def run_workflow(
         else:
             print_graphs = False
 
-    #Remvoes all old positive/negative lists and generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
+    # Remvoes all old positive/negative lists and generates completely new positive and negative lists for every replicate, regardless of if the file already exists or not
     else:
         remove_samples(dataset_directory_path)
         for i in range(x):
-            positive_dataset, negative_dataset = sample_data_neighbor(
-                go_protein_pairs, sample_size, protein_list, G, dataset_directory_path, i, name
+            positive_dataset, negative_dataset = sample_data_signalling(
+                go_protein_pairs,
+                sample_size,
+                protein_list,
+                G,
+                dataset_directory_path,
+                i,
+                name,
             )
 
-    
     for i in range(
         x
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
         if x > 1:
             print("\n\nReplicate: " + str(i) + "\n")
-    
+
         results = run_experiement(
             algorithm_classes,
             dataset_directory_path,
@@ -103,25 +107,25 @@ def run_workflow(
             i,
             name,
         )
-        
+
         # each loop adds the roc and pr values for the algorithm, index 0 for roc and 1 for pr
         for i in algorithm_classes.keys():
             auc[i][0].append(results[i]["roc_auc"])
             auc[i][1].append(results[i]["pr_auc"])
 
-    #Creates a dictionary for all pr values and all roc values and fills it with auc values 
+    # Creates a dictionary for all pr values and all roc values and fills it with auc values
     roc = {}
     pr = {}
 
     for i in algorithm_classes.keys():
         roc[i] = auc[i][0]
         pr[i] = auc[i][1]
-    
+
     if x > 1:
         cols = []
         for i in range(x):
             cols.append("Replicate " + str(i))
-        
+
         # Finds mean and sd of values, ROC mean index 0, ROC sd index 1, PR mean index 2, and PR sd index 3
         for i in auc.keys():
             meanROC = round(stat.mean(auc[i][0]), 5)
@@ -151,31 +155,15 @@ def run_workflow(
     else:
         cols = ["AUC"]
 
-    #Below saves full list of roc and pr values
-    dfr = pd.DataFrame.from_dict(
-        roc,
-        orient = 'index',
-        columns = cols
-    )
+    # Below saves full list of roc and pr values
+    dfr = pd.DataFrame.from_dict(roc, orient="index", columns=cols)
 
-    dfp = pd.DataFrame.from_dict(
-        pr,
-        orient = 'index',
-        columns = cols
-    )
-        
-    dfr.to_csv(
-        Path(output_data_path, "roc_auc_results.csv"),
-        index = True,
-        sep = "\t"
-    )
-    
-    dfp.to_csv(
-        Path(output_data_path, "pr_auc_results.csv"),
-        index = True,
-        sep = "\t"
-    )
-    #prints boxplots for replicate values and barplots for replicates with only one algorithm
+    dfp = pd.DataFrame.from_dict(pr, orient="index", columns=cols)
+
+    dfr.to_csv(Path(output_data_path, "roc_auc_results.csv"), index=True, sep="\t")
+
+    dfp.to_csv(Path(output_data_path, "pr_auc_results.csv"), index=True, sep="\t")
+    # prints boxplots for replicate values and barplots for replicates with only one algorithm
     if x > 1 & figure == True:
         if len(roc.keys()) == 1:
             replicate_barplot_only_one_algorithm(roc, output_image_path, True)
@@ -183,6 +171,7 @@ def run_workflow(
         else:
             replicate_boxplot(roc, output_image_path, True)
             replicate_boxplot(pr, output_image_path, False)
+
 
 def run_experiement(
     algorithm_classes,
@@ -220,7 +209,12 @@ def run_experiement(
         print("")
         print(f"{i} / {len(algorithm_classes)}: {algorithm_name} Algorithm")
         current = run_algorithm(
-            algorithm_class, input_directory_path, graph_file_path, output_data_path, rep_num, name,
+            algorithm_class,
+            input_directory_path,
+            graph_file_path,
+            output_data_path,
+            rep_num,
+            name,
         )
         current = run_metrics(current)
         results[algorithm_name] = current
@@ -255,7 +249,7 @@ def run_algorithm(
     output_data_path {Path} : path of the output data
     rep_num {int} : replicate number to use associated pos/neg dataset
     name {str} : namespaces used to create the sample datasets
-    
+
 
     Returns:
     Result {dict} : a dictionary that stores the y_true and y_score values of the algorithm
@@ -265,7 +259,11 @@ def run_algorithm(
 
     # Predict using the algorithm
     y_score, y_true = algorithm.predict(
-        input_directory_path, graph_file_path, output_data_path, rep_num, name,
+        input_directory_path,
+        graph_file_path,
+        output_data_path,
+        rep_num,
+        name,
     )
 
     # Access y_true and y_score attributes for evaluation
@@ -383,10 +381,32 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
 
     # colors = generate_random_colors(len(algorithm_classes))
     col_names = ["ON", "ON2", "ON3", "PD", "PD2", "PD3", "SA", "HD", "HD2"]
-    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "paleturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    colors = [
+        "lightcoral",
+        "indianred",
+        "firebrick",
+        "peachpuff",
+        "sandybrown",
+        "peru",
+        "gold",
+        "goldenrod",
+        "darkgoldenrod",
+        "yellowgreen",
+        "olivedrab",
+        "darkolivegreen",
+        "paleturquoise",
+        "mediumturquoise",
+        "darkcyan",
+        "mediumpurple",
+        "darkviolet",
+        "rebeccapurple",
+        "hotpink",
+        "deeppink",
+        "mediumvioletred",
+    ]
     len_keys = len(algorithm_classes)
-    ran = random.randrange(len(colors)-len_keys)
-    colors = colors[ran:ran+len_keys]
+    ran = random.randrange(len(colors) - len_keys)
+    colors = colors[ran : ran + len_keys]
 
     sorted_results = sort_results_by(results, "roc_auc", output_data_path)
     # Initialize your parameters
@@ -437,7 +457,9 @@ def generate_figures(algorithm_classes, results, output_image_path, output_data_
     plt.show()
 
 
-def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name):
+def sample_data(
+    go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name
+):
     """
     Given a sample size, generate positive nad negative datasets.
 
@@ -475,21 +497,30 @@ def sample_data(go_protein_pairs, sample_size, protein_list, G, input_directory_
         i += 1
     positive_df = pd.DataFrame(positive_dataset)
     negative_df = pd.DataFrame(negative_dataset)
-    
+
     positive_df.to_csv(
-        Path(input_directory_path, "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv"),
+        Path(
+            input_directory_path,
+            "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv",
+        ),
         index=False,
         sep="\t",
     )
     negative_df.to_csv(
-        Path(input_directory_path, "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv"),
+        Path(
+            input_directory_path,
+            "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv",
+        ),
         index=False,
         sep="\t",
     )
 
     return positive_dataset, negative_dataset
 
-def sample_data_neighbor(go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name):
+
+def sample_data_neighbor(
+    go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name
+):
     """
     Given a sample size, generate positive nad negative datasets.
 
@@ -524,14 +555,92 @@ def sample_data_neighbor(go_protein_pairs, sample_size, protein_list, G, input_d
         i += 1
     positive_df = pd.DataFrame(positive_dataset)
     negative_df = pd.DataFrame(negative_dataset)
-    
+
     positive_df.to_csv(
-        Path(input_directory_path, "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv"),
+        Path(
+            input_directory_path,
+            "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv",
+        ),
         index=False,
         sep="\t",
     )
     negative_df.to_csv(
-        Path(input_directory_path, "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv"),
+        Path(
+            input_directory_path,
+            "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv",
+        ),
+        index=False,
+        sep="\t",
+    )
+
+    return positive_dataset, negative_dataset
+
+
+def sample_data_signalling(
+    go_protein_pairs, sample_size, protein_list, G, input_directory_path, num, name
+):
+    """
+    Given a sample size, generate positive nad negative datasets.
+
+    Parameters:
+
+    go_protein_pairs {list} : a list containing the edge between a protein and a go-term e.g. [[protein1, go_term1], [protein2, go_term2], ...]
+    sample_size {int} : the size of a positive/negative dataset to be sampled
+    protein_list {list} : a list of all proteins in the graph
+    G {nx.Graph} : graph that represents the interactome and go term connections
+    input_directory_path {Path} : Path to directory of the datasets
+    num {int} : Number of positive/negative dataset
+    name {str} : shorthand for all namespaces used to generate datasets, adds shorthand to .csv name
+
+    Returns:
+    positive_dataset, negative_dataset
+
+    """
+    positive_dataset = {"protein": [], "go": []}
+    negative_dataset = {"protein": [], "go": []}
+    # sample the data
+    for edge in sample(list(go_protein_pairs), sample_size):
+        positive_dataset["protein"].append(edge[0])
+        positive_dataset["go"].append(edge[1])
+
+    signalling_go_term_list = [
+        "GO:0004888",
+        "GO:0038023",
+        "GO:0005102",
+        "GO:0023051",
+        "GO:0030546",
+        "GO:0030545",
+    ]
+
+    for go_term in signalling_go_term_list:
+        neighbor_list = get_neighbors(G, go_term, ["protein_go_term"])
+        for protein in neighbor_list:  
+            positive_dataset["protein"].append(protein)
+            positive_dataset["go"].append(go_term)
+    i = 1
+
+    for protein, go in zip(positive_dataset["protein"], positive_dataset["go"]):
+        closest_neighbor = find_closest_neighbor_without_edge(G, protein, go)
+        negative_dataset["protein"].append(closest_neighbor)
+        negative_dataset["go"].append(go)
+        print_progress(i, sample_size)
+        i += 1
+    positive_df = pd.DataFrame(positive_dataset)
+    negative_df = pd.DataFrame(negative_dataset)
+
+    positive_df.to_csv(
+        Path(
+            input_directory_path,
+            "rep_" + str(num) + "_positive_protein_go_term_pairs" + name + ".csv",
+        ),
+        index=False,
+        sep="\t",
+    )
+    negative_df.to_csv(
+        Path(
+            input_directory_path,
+            "rep_" + str(num) + "_negative_protein_go_term_pairs" + name + ".csv",
+        ),
         index=False,
         sep="\t",
     )
@@ -557,7 +666,15 @@ def get_datasets(input_directory_path, rep_num, name):
     negative_dataset = {"protein": [], "go": []}
     try:
         with open(
-            Path(input_directory_path, "rep_" + str(rep_num) + "_positive_protein_go_term_pairs" + name + ".csv"), "r"
+            Path(
+                input_directory_path,
+                "rep_"
+                + str(rep_num)
+                + "_positive_protein_go_term_pairs"
+                + name
+                + ".csv",
+            ),
+            "r",
         ) as file:
             next(file)
             for line in file:
@@ -565,11 +682,18 @@ def get_datasets(input_directory_path, rep_num, name):
                 positive_dataset["protein"].append(parts[0])
                 positive_dataset["go"].append(parts[1])
     except:
-        print(Fore.RED + "\nFile not found: ensure given namespaces match positive and negative file namespaces\n")
+        print(
+            Fore.RED
+            + "\nFile not found: ensure given namespaces match positive and negative file namespaces\n"
+        )
         sys.exit(1)
 
     with open(
-        Path(input_directory_path, "rep_" + str(rep_num) + "_negative_protein_go_term_pairs" + name + ".csv"), "r"
+        Path(
+            input_directory_path,
+            "rep_" + str(rep_num) + "_negative_protein_go_term_pairs" + name + ".csv",
+        ),
+        "r",
     ) as file:
         next(file)
         for line in file:
@@ -614,6 +738,7 @@ def sort_results_by(results, key, output_path):
         sorted_results[algorithm[0]] = results[algorithm[0]]
     return sorted_results
 
+
 def remove_samples(dataset_directory_path):
     """
     Removes all old samples before creating new ones (to ensure no issues when changing namespaces)
@@ -622,29 +747,27 @@ def remove_samples(dataset_directory_path):
 
     x {int}: the number of replicates
     dataset_directory_path {Path}: path to the dataset directory where samples are stored
-    
+
     Returns:
     Null
 
     """
     data_dir = sorted(os.listdir(dataset_directory_path))
-    remove = [] 
-    files = {'positive': {},
-       'negative': {}
-        } 
+    remove = []
+    files = {"positive": {}, "negative": {}}
     for i in data_dir:
         temp = i.split("_")
-        if temp[0] == 'rep':
+        if temp[0] == "rep":
             rep_num = int(temp[1])
-            if temp[2] == 'positive':
-                files['positive'][rep_num] = i
+            if temp[2] == "positive":
+                files["positive"][rep_num] = i
                 remove.append(rep_num)
-            elif temp[2] == 'negative':
-                files['negative'][rep_num] = i
-                
+            elif temp[2] == "negative":
+                files["negative"][rep_num] = i
+
     for i in remove:
-        del_file_path_pos = Path(dataset_directory_path, files['positive'][i])
-        del_file_path_neg = Path(dataset_directory_path, files['negative'][i])
+        del_file_path_pos = Path(dataset_directory_path, files["positive"][i])
+        del_file_path_neg = Path(dataset_directory_path, files["negative"][i])
         os.remove(del_file_path_pos)
         os.remove(del_file_path_neg)
 
@@ -656,22 +779,23 @@ def use_existing_samples(dataset_directory_path):
     Parameters:
 
     dataset_directory_path {Path}: path to the dataset directory where samples are stored
-    
+
     Returns:
     the number of repititions in the directory {int}
 
     """
     data_dir = sorted(os.listdir(dataset_directory_path))
-    nums = [] 
+    nums = []
     for i in data_dir:
         temp = i.split("_")
-        if temp[0] == 'rep':
+        if temp[0] == "rep":
             rep_num = int(temp[1])
-            if temp[2] == 'positive':
+            if temp[2] == "positive":
                 nums.append(rep_num)
     nums = sorted(nums)
     n = len(nums)
     return n
+
 
 def replicate_boxplot(auc_list, output_image_path, curve):
     """
@@ -681,8 +805,8 @@ def replicate_boxplot(auc_list, output_image_path, curve):
 
     auc_list {dict}: either ROC or PR dictionary containing the list of AUC values for each replicate
     output_image_path {Path} : output path to save the graph
-    curve {bool} : either True for ROC or False for PR 
-    
+    curve {bool} : either True for ROC or False for PR
+
     Returns:
     NULL
 
@@ -690,26 +814,46 @@ def replicate_boxplot(auc_list, output_image_path, curve):
     graph = []
     col_names = []
     for i in list(auc_list.keys()):
-        #Pulled Code from w3r
-        remove_lower = lambda text: re.sub('[a-z]', '', text)
+        # Pulled Code from w3r
+        remove_lower = lambda text: re.sub("[a-z]", "", text)
         col_names.append(remove_lower(i))
-    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "paleturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    colors = [
+        "lightcoral",
+        "indianred",
+        "firebrick",
+        "peachpuff",
+        "sandybrown",
+        "peru",
+        "gold",
+        "goldenrod",
+        "darkgoldenrod",
+        "yellowgreen",
+        "olivedrab",
+        "darkolivegreen",
+        "paleturquoise",
+        "mediumturquoise",
+        "darkcyan",
+        "mediumpurple",
+        "darkviolet",
+        "rebeccapurple",
+        "hotpink",
+        "deeppink",
+        "mediumvioletred",
+    ]
     len_keys = len(auc_list.keys())
-    ran = random.randrange(len(colors)-len_keys)
-    colors = colors[ran:ran+len_keys]
+    ran = random.randrange(len(colors) - len_keys)
+    colors = colors[ran : ran + len_keys]
     for i in auc_list:
         graph.append(auc_list[i])
-    
+
     fig, ax = plt.subplots()
     ax.set_ylabel("AUC")
-    
-    plot = ax.boxplot(graph, 
-                      patch_artist = True,
-                      labels = col_names)
-    
-    for patch, color in zip(plot['boxes'], colors):
+
+    plot = ax.boxplot(graph, patch_artist=True, labels=col_names)
+
+    for patch, color in zip(plot["boxes"], colors):
         patch.set_facecolor(color)
-    
+
     if curve == True:
         plt.title("ROC replicates")
         plt.savefig(Path(output_image_path, "roc_replicate_boxplot.png"))
@@ -727,8 +871,8 @@ def replicate_barplot_only_one_algorithm(auc_list, output_image_path, curve):
 
     auc_list {dict}: either ROC or PR dictionary containing the list of AUC values for each replicate
     output_image_path {Path} : output path to save the graph
-    curve {bool} : either True for ROC or False for PR 
-    
+    curve {bool} : either True for ROC or False for PR
+
     Returns:
     NULL
 
@@ -739,18 +883,38 @@ def replicate_barplot_only_one_algorithm(auc_list, output_image_path, curve):
     col_names = []
     for i in range(len(graph)):
         col_names.append("Rep " + str(i))
-    colors = ["lightcoral", "indianred", "firebrick", "peachpuff", "sandybrown", "peru", "gold", "goldenrod", "darkgoldenrod", "yellowgreen", "olivedrab", "darkolivegreen", "paleturquoise", "mediumturquoise", "darkcyan", "mediumpurple", "darkviolet", "rebeccapurple", "hotpink", "deeppink", "mediumvioletred"]
+    colors = [
+        "lightcoral",
+        "indianred",
+        "firebrick",
+        "peachpuff",
+        "sandybrown",
+        "peru",
+        "gold",
+        "goldenrod",
+        "darkgoldenrod",
+        "yellowgreen",
+        "olivedrab",
+        "darkolivegreen",
+        "paleturquoise",
+        "mediumturquoise",
+        "darkcyan",
+        "mediumpurple",
+        "darkviolet",
+        "rebeccapurple",
+        "hotpink",
+        "deeppink",
+        "mediumvioletred",
+    ]
     len_keys = len(graph)
-    ran = random.randrange(len(colors)-len_keys)
-    colors = colors[ran:ran+len_keys]
-    
+    ran = random.randrange(len(colors) - len_keys)
+    colors = colors[ran : ran + len_keys]
+
     fig, ax = plt.subplots()
     ax.set_ylabel("AUC")
     my_cmap = plt.get_cmap("viridis")
-    plot = ax.bar(col_names,
-                  graph, 
-                  color = colors)
-    
+    plot = ax.bar(col_names, graph, color=colors)
+
     if curve == True:
         plt.title("ROC replicates")
         plt.savefig(Path(output_image_path, "roc_replicate_barplot.png"))
@@ -759,23 +923,27 @@ def replicate_barplot_only_one_algorithm(auc_list, output_image_path, curve):
         plt.savefig(Path(output_image_path, "pr_replicate_barplot.png"))
     plt.show()
 
+
 def get_neighbors(G: nx.DiGraph, node, edgeTypes):
     res = G.edges(node, data=True)
     neighbors = []
     for edge in res:
         if edge[2]["type"] in edgeTypes:
             neighborNode = [edge[1], edge[2]]
-            neighbors.append(neighborNode) 
+            neighbors.append(neighborNode[0])
 
     return neighbors
+
 
 def find_closest_neighbor_without_edge(G, protein1, go_term1):
     # Use BFS to explore neighbors of protein1
     for neighbor in nx.bfs_tree(G, protein1):
-        if (neighbor != protein1 and 
-            G.nodes[neighbor].get('type') == 'protein' and 
-            not G.has_edge(neighbor, go_term1)):
+        if (
+            neighbor != protein1
+            and G.nodes[neighbor].get("type") == "protein"
+            and not G.has_edge(neighbor, go_term1)
+        ):
             return neighbor
-    
+
     # If all neighbors have an edge to go_term1
     return None

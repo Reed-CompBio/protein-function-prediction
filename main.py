@@ -80,7 +80,7 @@ def main():
     repeats = 1
     new_random_lists = True
     print_graphs = True
-    no_inferred_edges = True
+    no_inferred_edges = False
     go_term_type = [namespace[0],namespace[1],namespace[2]]
     # sample_size: number of samples chosen for positive/negative lists (total is 2xsample_size)
     # repeats: number of times to run all algorithms to obtain an average
@@ -123,15 +123,15 @@ def main():
             short_name = short_name + "_cel"
 
     interactome_columns = [0, 1]
-    interactome = read_specific_columns(elegans_interactome_path, interactome_columns, ",")
-    regulatory_interactome = read_specific_columns(elegans_reg_path, interactome_columns, ",")
+    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
+    regulatory_interactome = read_specific_columns(fly_reg_path, interactome_columns, ",")
     go_inferred_columns = [0, 2, 3]
     #Adds relationship_type column
     if no_inferred_edges: 
         go_inferred_columns.append(1)
         
     go_protein_pairs = read_pro_go_data(
-        elegans_go_association_mixed_path, go_inferred_columns, go_term_type, ","
+        fly_go_association_mixed_path, go_inferred_columns, go_term_type, ","
     )
     #Uses relationship_type column to sort through which proGO edges are inferred 
     if no_inferred_edges:
