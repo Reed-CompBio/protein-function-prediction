@@ -46,14 +46,14 @@ class ProteinDegreeV2(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
+        positive_dataset, negative_dataset = get_datasets(
+            input_directory_path, rep_num, name
+        )
         G = import_graph_from_pickle(graph_file_path)
         i = 1
-        for positive_protein, positive_go, negative_protein, negative_go in zip(
+        for positive_protein, positive_go in zip(
             positive_dataset["protein"],
             positive_dataset["go"],
-            negative_dataset["protein"],
-            negative_dataset["go"],
         ):
 
             data["protein"].append(positive_protein)
@@ -63,13 +63,20 @@ class ProteinDegreeV2(BaseAlgorithm):
             )
             data["true_label"].append(1)
 
+            print_progress(i, len(positive_dataset["protein"]))
+            i += 1
+
+        for negative_protein, negative_go in zip(
+            negative_dataset["protein"],
+            negative_dataset["go"],
+        ):
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
             data["degree"].append(
-                len(get_neighbors(G, negative_protein, "protein_protein")) 
+                len(get_neighbors(G, negative_protein, "protein_protein"))
             )
             data["true_label"].append(0)
-            print_progress(i, len(positive_dataset["protein"]))
+            print_progress(i, len(negative_dataset["protein"]))
             i += 1
 
         normalized_data = normalize(data["degree"])
@@ -89,6 +96,7 @@ class ProteinDegreeV2(BaseAlgorithm):
         y_true = df["true_label"].to_list()
 
         return y_score, y_true
+
 
 def normalize(data):
     data = np.array(data)

@@ -15,10 +15,10 @@ class OverlappingNeighbors(BaseAlgorithm):
 
     def get_y_score(self):
         return self.y_score
-    
+
     def get_y_true(self):
         return self.y_true
-    
+
     def set_y_score(self, y_score):
         self.y_score = y_score
 
@@ -55,20 +55,20 @@ class OverlappingNeighbors(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
+        positive_dataset, negative_dataset = get_datasets(
+            input_directory_path, rep_num, name
+        )
         G = import_graph_from_pickle(graph_file_path)
         i = 1
-        for positive_protein, positive_go, negative_protein, negative_go in zip(
+        for positive_protein, positive_go in zip(
             positive_dataset["protein"],
             positive_dataset["go"],
-            negative_dataset["protein"],
-            negative_dataset["go"],
         ):
             # calculate the score for the positive set
             positive_protein_neighbor = get_neighbors(
                 G, positive_protein, ["protein_protein", "regulatory"]
             )
-            
+
             # print("\nPositive protein neighbors: " + str(positive_pro_pro_neighbor))
             positive_go_neighbor = get_neighbors(G, positive_go, ["protein_go_term"])
             positive_go_annotated_protein_neighbor_count = (
@@ -76,13 +76,32 @@ class OverlappingNeighbors(BaseAlgorithm):
                     G, positive_protein_neighbor, positive_go
                 )
             )
-            
+
             if len(positive_protein_neighbor) == 0:
                 positive_score = 0
             else:
                 positive_score = (1 + positive_go_annotated_protein_neighbor_count) / (
                     len(positive_protein_neighbor) + len(positive_go_neighbor)
                 )
+
+            # input positive and negative score to data
+            data["protein"].append(positive_protein)
+            data["go_term"].append(positive_go)
+            data["protein_neighbor"].append(len(positive_protein_neighbor))
+            data["go_neighbor"].append(len(positive_go_neighbor))
+            data["go_annotated_protein_neighbors"].append(
+                positive_go_annotated_protein_neighbor_count
+            )
+            data["score"].append(positive_score)
+            data["true_label"].append(1)
+
+            print_progress(i, len(positive_dataset["protein"]))
+            i += 1
+
+        for negative_protein, negative_go in zip(
+            negative_dataset["protein"],
+            negative_dataset["go"],
+        ):
 
             # calculate the score for the negative set
             negative_protein_neighbor = get_neighbors(
@@ -102,17 +121,6 @@ class OverlappingNeighbors(BaseAlgorithm):
                     len(negative_protein_neighbor) + len(negative_go_neighbor)
                 )
 
-            # input positive and negative score to data
-            data["protein"].append(positive_protein)
-            data["go_term"].append(positive_go)
-            data["protein_neighbor"].append(len(positive_protein_neighbor))
-            data["go_neighbor"].append(len(positive_go_neighbor))
-            data["go_annotated_protein_neighbors"].append(
-                positive_go_annotated_protein_neighbor_count
-            )
-            data["score"].append(positive_score)
-            data["true_label"].append(1)
-
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
             data["protein_neighbor"].append(len(negative_protein_neighbor))
@@ -123,7 +131,7 @@ class OverlappingNeighbors(BaseAlgorithm):
             data["score"].append(negative_score)
             data["true_label"].append(0)
 
-            print_progress(i, len(positive_dataset["protein"]))
+            print_progress(i, len(negative_dataset["protein"]))
             i += 1
 
         normalized_data = normalize(data["score"])
@@ -151,7 +159,7 @@ def get_neighbors(G: nx.DiGraph, node, edgeTypes):
     for edge in res:
         if edge[2]["type"] in edgeTypes:
             neighborNode = [edge[1], edge[2]]
-            neighbors.append(neighborNode) 
+            neighbors.append(neighborNode)
 
     return neighbors
 

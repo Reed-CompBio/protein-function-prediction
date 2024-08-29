@@ -47,22 +47,27 @@ class ProteinDegree(BaseAlgorithm):
         G = import_graph_from_pickle(graph_file_path)
 
         i = 1
-        for positive_protein, positive_go, negative_protein, negative_go in zip(
+        for positive_protein, positive_go in zip(
             positive_dataset["protein"],
             positive_dataset["go"],
-            negative_dataset["protein"],
-            negative_dataset["go"],
         ):
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
             data["degree"].append(G.degree(positive_protein))
             data["true_label"].append(1)
 
+            print_progress(i, len(positive_dataset["protein"]))
+            i += 1
+
+        for negative_protein, negative_go in zip(
+            negative_dataset["protein"],
+            negative_dataset["go"],
+        ):
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
             data["degree"].append(G.degree(negative_protein))
             data["true_label"].append(0)
-            print_progress(i, len(positive_dataset["protein"]))
+            print_progress(i, len(negative_dataset["protein"]))
             i += 1
 
         normalized_data = normalize(data["degree"])

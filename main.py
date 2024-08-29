@@ -28,7 +28,7 @@ from tools.helper import (
     read_specific_columns,
     export_graph_to_pickle,
     read_pro_go_data,
-    read_go_depth_data
+    read_go_depth_data,
 )
 from tools.workflow import run_workflow
 from networkx.algorithms import bipartite
@@ -67,7 +67,6 @@ def main():
     elegans_go_association_mixed_path = Path("./network/elegans_proGo_mixed.csv")
     go_depth_path = Path("./network/go_depth.csv")
 
-
     output_data_path = Path("./output/data/")
     output_image_path = Path("./output/images/")
     dataset_directory_path = Path("./output/dataset")
@@ -81,27 +80,26 @@ def main():
     new_random_lists = True
     print_graphs = True
     no_inferred_edges = False
-    go_term_type = [namespace[0],namespace[1],namespace[2]]
+    go_term_type = [namespace[0], namespace[1], namespace[2]]
     # sample_size: number of samples chosen for positive/negative lists (total is 2xsample_size)
     # repeats: number of times to run all algorithms to obtain an average
     # new_random_lists: if the pos/neg lists already exist (False) or to create new pos/neg lists using sample size and repeats (True)
     # print_graphs: to output data as graphs (True) or not (False)
     # no_inferred_edges: To use inferred edges (False) or to remove inferred edges (True)
     # go_term_type: When new_random_lists is True, change to include the namespaces used in the sample
-    
+
     testing_output_data_path = Path("./output/data/")
     testing_output_image_path = Path("./output/images/")
     testing_input_directory_path = Path("./tests/testing-dataset/")
     testing_graph_file_path = Path(testing_input_directory_path, "graph.pickle")
 
-    
     short_name = ""
     # When using previously created lists, this uses the go_term_types in the file name to find which types are used
     if new_random_lists == False:
         go_term_type = []
         data_dir = sorted(os.listdir(dataset_directory_path))
         for j in data_dir:
-            if j.startswith('rep_0_neg'):
+            if j.startswith("rep_0_neg"):
                 file = j
         file = file.replace(".", "_")
         file = file.split("_")
@@ -114,7 +112,7 @@ def main():
         if "cel" in file:
             go_term_type.append(namespace[2])
             short_name = short_name + "_cel"
-    else: 
+    else:
         if namespace[0] in go_term_type:
             short_name = short_name + "_mol"
         if namespace[1] in go_term_type:
@@ -124,41 +122,42 @@ def main():
 
     interactome_columns = [0, 1]
     interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
-    regulatory_interactome = read_specific_columns(fly_reg_path, interactome_columns, ",")
+    regulatory_interactome = read_specific_columns(
+        fly_reg_path, interactome_columns, ","
+    )
     go_inferred_columns = [0, 2, 3]
-    #Adds relationship_type column
-    if no_inferred_edges: 
+    # Adds relationship_type column
+    if no_inferred_edges:
         go_inferred_columns.append(1)
-        
+
     go_protein_pairs = read_pro_go_data(
         fly_go_association_mixed_path, go_inferred_columns, go_term_type, ","
     )
-    #Uses relationship_type column to sort through which proGO edges are inferred 
+    # Uses relationship_type column to sort through which proGO edges are inferred
     if no_inferred_edges:
         temp = []
         for i in go_protein_pairs:
             if i[3] != "inferred_from_descendant":
                 temp.append(i)
         go_protein_pairs = temp
-    
 
-    depth_columns = [0,1,2]
-    go_depth_dict = read_go_depth_data(go_depth_path, depth_columns, go_term_type, ',')
+    depth_columns = [0, 1, 2]
+    go_depth_dict = read_go_depth_data(go_depth_path, depth_columns, go_term_type, ",")
 
     protein_list = []
 
     # Generate a standard graph using the pro-pro, regulatory, and pro-go interactions
-    G, protein_list = create_mixed_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
-    export_graph_to_pickle(G, graph_file_path)
+    # G, protein_list = create_mixed_network(
+    #     interactome, regulatory_interactome, go_protein_pairs, go_depth_dict
+    # )
+    # export_graph_to_pickle(G, graph_file_path)
     # Creates a graph with only protein-protein edges (used for RandomWalkV4)
-    # P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
-    # export_graph_to_pickle(P, "./output/dataset/protein.pickle")
+    P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
+    export_graph_to_pickle(P, "./output/dataset/protein.pickle")
     # Creates a graph with only protein-GO term edges (used for RandomWalkV5)
     # D, protein_list = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
     # export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
 
-    # sys.exit()
-    
     # Define algorithm classes and their names
     algorithm_classes = {
         "OverlappingNeighbors": OverlappingNeighbors,
@@ -170,9 +169,9 @@ def main():
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
-        "RandomWalk": RandomWalk, 
-        "RandomWalkV2": RandomWalkV2, 
-        "RandomWalkV3": RandomWalkV3, 
+        "RandomWalk": RandomWalk,
+        "RandomWalkV2": RandomWalkV2,
+        "RandomWalkV3": RandomWalkV3,
         # "RandomWalkV4": RandomWalkV4,   #need protein-only network
         # "RandomWalkV5": RandomWalkV5,     #need protein-goterm only network
     }
@@ -182,7 +181,7 @@ def main():
         go_protein_pairs,
         sample_size,
         protein_list,
-        graph_file_path,       #make sure you have the correct file path
+        graph_file_path,  # make sure you have the correct file path
         dataset_directory_path,
         output_data_path,
         output_image_path,
