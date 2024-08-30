@@ -75,7 +75,7 @@ def main():
     protein_file_path = Path(dataset_directory_path, "protein.pickle")
 
     namespace = ["molecular_function", "biological_process", "cellular_component"]
-    sample_size = 10
+    sample_size = 1000
     repeats = 1
     new_random_lists = True
     print_graphs = True
@@ -147,13 +147,13 @@ def main():
     protein_list = []
 
     # Generate a standard graph using the pro-pro, regulatory, and pro-go interactions
-    # G, protein_list = create_mixed_network(
-    #     interactome, regulatory_interactome, go_protein_pairs, go_depth_dict
-    # )
-    # export_graph_to_pickle(G, graph_file_path)
+    G, protein_list = create_mixed_network(
+        interactome, regulatory_interactome, go_protein_pairs, go_depth_dict
+    )
+    export_graph_to_pickle(G, graph_file_path)
     # Creates a graph with only protein-protein edges (used for RandomWalkV4)
-    P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
-    export_graph_to_pickle(P, "./output/dataset/protein.pickle")
+    # P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
+    # export_graph_to_pickle(P, "./output/dataset/protein.pickle")
     # Creates a graph with only protein-GO term edges (used for RandomWalkV5)
     # D, protein_list = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
     # export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")

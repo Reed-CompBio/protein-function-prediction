@@ -90,6 +90,8 @@ def run_workflow(
                 name,
             )
 
+    sys.exit()
+
     for i in range(
         x
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
@@ -735,7 +737,7 @@ def sample_data_neighbor_degree_ratio(
     positive_dataset = {"protein": [], "go": []}
     temp_positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
-    ratio = 2
+    ratio = 10
 
     # sample the data
     for edge in sample(list(go_protein_pairs), sample_size):
@@ -747,13 +749,13 @@ def sample_data_neighbor_degree_ratio(
     for protein, go in zip(temp_positive_dataset["protein"], temp_positive_dataset["go"]):
         positive_dataset["protein"].append(protein)
         positive_dataset["go"].append(go)
-        for k in range(ratio):
-            closest_neighbor = find_closest_neighbor_without_edge_degree(G, protein, go)
-            if closest_neighbor != None:
-                negative_dataset["protein"].append(closest_neighbor)
+        closest_neighbors = find_closest_neighbor_without_edge_degree(G, protein, go, ratio)
+        if closest_neighbors != None:
+            for k in range(ratio):
+                negative_dataset["protein"].append(closest_neighbors[k])
                 negative_dataset["go"].append(go)
-        print_progress(i, sample_size * ratio)
-        i += 1
+                print_progress(i, sample_size * ratio)
+                i += 1
     positive_df = pd.DataFrame(positive_dataset)
     negative_df = pd.DataFrame(negative_dataset)
 
@@ -1077,8 +1079,15 @@ def find_closest_neighbor_without_edge(G, protein, go_term):
     return None
 
 
-def find_closest_neighbor_without_edge_degree(G, protein, go_term):
+def find_closest_neighbor_without_edge_degree(G, protein, go_term, num_samples = 1):
+    # print("inside closest neighbor", protein, go_term)
     delta = 5
+    # neighbors_list = []
+    # for neighbor in nx.bfs_tree(G,protein):
+    #     neighbors_list.append(neighbor)
+    #     print(neighbor)
+    neighbor_list = []
+    i = 0
     for neighbor in nx.bfs_tree(G, protein):
         if (
             neighbor != protein
@@ -1087,7 +1096,9 @@ def find_closest_neighbor_without_edge_degree(G, protein, go_term):
             and G.degree(neighbor) <= (G.degree(protein) + delta)
             and G.degree(neighbor) >= (G.degree(protein) - delta)
         ):
-            return neighbor
-
+            neighbor_list.append(neighbor)
+        if (len(neighbor_list) == num_samples):
+            return neighbor_list
+        
     # If all neighbors have an edge to go_term1
     return None
