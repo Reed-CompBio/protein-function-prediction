@@ -285,7 +285,7 @@ def create_go_protein_only_network(ppi_interactome,regulatory_interactome,GO_ter
     print("total edge count: ", len(G.edges()))
     print("total node count: ", len(G.nodes()))
 
-    return G, protein_list
+    return G
 
 
 def read_specific_columns(file_path, columns, delimit):

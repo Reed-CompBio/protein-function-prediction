@@ -107,40 +107,6 @@ class RandomWalkV3(BaseAlgorithm):
             print_progress(i, len(negative_dataset["protein"]))
             i += 1
 
-        # for positive_protein, positive_go, negative_protein, negative_go in zip(
-        #     positive_dataset["protein"],
-        #     positive_dataset["go"],
-        #     negative_dataset["protein"],
-        #     negative_dataset["go"],
-        # ):
-        #     go_neighbors = get_neighbors(G, positive_go, "protein_go_term")
-
-        #     go_neighbor_dict = {}
-        #     for j in go_neighbors:
-        #         if j[0] != positive_protein:
-        #             go_neighbor_dict[j[0]] = 1
-        #         G.remove_edge(j[0], positive_go)
-        #     if len(go_neighbor_dict) != 0:
-        #         p = nx.pagerank(G, alpha=0.7, personalization=go_neighbor_dict)
-        #         data["walk"].append(p[positive_protein])
-        #         data["walk"].append(p[negative_protein])
-        #     else:
-        #         data["walk"].append(0)
-        #         data["walk"].append(0)
-
-        #     data["protein"].append(positive_protein)
-        #     data["go_term"].append(positive_go)
-        #     data["true_label"].append(1)
-
-        #     data["protein"].append(negative_protein)
-        #     data["go_term"].append(negative_go)
-        #     data["true_label"].append(0)
-        #     for j in go_neighbors:
-        #         G.add_edge(j[0], positive_go, type="protein_go_term")
-
-        #     print_progress(i, len(positive_dataset["protein"]))
-        #     i += 1
-
         normalized_data = normalize(data["walk"])
         for item in normalized_data:
             data["norm_score"].append(item)

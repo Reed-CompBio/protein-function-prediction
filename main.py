@@ -1,12 +1,14 @@
 from classes.overlapping_neighbors_class import OverlappingNeighbors
 from classes.overlapping_neighbors_v2_class import OverlappingNeighborsV2
 from classes.overlapping_neighbors_v3_class import OverlappingNeighborsV3
+from classes.one_hop_go_degree_class import OneHopGODegree
 from classes.protein_degree_class import ProteinDegree
 from classes.protein_degree_v2_class import ProteinDegreeV2
 from classes.protein_degree_v3_class import ProteinDegreeV3
 from classes.sample_algorithm import SampleAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
+from classes.hypergeometric_distribution_class_V3 import HypergeometricDistributionV3
 from classes.random_walk_class import RandomWalk
 from classes.random_walk_class_v2 import RandomWalkV2
 from classes.random_walk_class_v3 import RandomWalkV3
@@ -121,9 +123,11 @@ def main():
             short_name = short_name + "_cel"
 
     interactome_columns = [0, 1]
-    interactome = read_specific_columns(fly_interactome_path, interactome_columns, ",")
+    interactome = read_specific_columns(
+        elegans_interactome_path, interactome_columns, ","
+    )
     regulatory_interactome = read_specific_columns(
-        fly_reg_path, interactome_columns, ","
+        elegans_reg_path, interactome_columns, ","
     )
     go_inferred_columns = [0, 2, 3]
     # Adds relationship_type column
@@ -131,7 +135,7 @@ def main():
         go_inferred_columns.append(1)
 
     go_protein_pairs = read_pro_go_data(
-        fly_go_association_mixed_path, go_inferred_columns, go_term_type, ","
+        elegans_go_association_mixed_path, go_inferred_columns, go_term_type, ","
     )
     # Uses relationship_type column to sort through which proGO edges are inferred
     if no_inferred_edges:
@@ -155,23 +159,25 @@ def main():
     # P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
     # export_graph_to_pickle(P, "./output/dataset/protein.pickle")
     # Creates a graph with only protein-GO term edges (used for RandomWalkV5)
-    # D, protein_list = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
-    # export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
+    D = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
+    export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
 
     # Define algorithm classes and their names
     algorithm_classes = {
         "OverlappingNeighbors": OverlappingNeighbors,
         "OverlappingNeighborsV2": OverlappingNeighborsV2,
         "OverlappingNeighborsV3": OverlappingNeighborsV3,
+        "OneHopGODegree": OneHopGODegree,
         "ProteinDegree": ProteinDegree,
         "ProteinDegreeV2": ProteinDegreeV2,
         "ProteinDegreeV3": ProteinDegreeV3,
         "SampleAlgorithm": SampleAlgorithm,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
+        "HypergeometricDistributionV3": HypergeometricDistributionV3,
         "RandomWalk": RandomWalk,
-        "RandomWalkV2": RandomWalkV2,
-        "RandomWalkV3": RandomWalkV3,
+        # "RandomWalkV2": RandomWalkV2,
+        # "RandomWalkV3": RandomWalkV3,
         # "RandomWalkV4": RandomWalkV4,   #need protein-only network
         # "RandomWalkV5": RandomWalkV5,     #need protein-goterm only network
     }

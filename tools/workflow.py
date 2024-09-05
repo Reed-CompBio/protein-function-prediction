@@ -90,8 +90,6 @@ def run_workflow(
                 name,
             )
 
-    sys.exit()
-
     for i in range(
         x
     ):  # Creates a pos/neg list each replicate then runs workflow like normal
