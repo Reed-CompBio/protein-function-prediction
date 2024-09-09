@@ -33,8 +33,8 @@ def get_roc_data(data_df: dict) -> list:
     return fpr, tpr, threshold, roc_auc
 
 
-def create_plot(x_data: list, y_data: list, auc: float, type: str) -> None:
-    plt.plot(
+def create_plot(ax, x_data: list, y_data: list, auc: float, type: str) -> None:
+    ax.plot(
         x_data,
         y_data,
         color="red",
@@ -45,9 +45,9 @@ def create_plot(x_data: list, y_data: list, auc: float, type: str) -> None:
 
 def main():
     print("Generating figures")
-    # read in the files and get the score and label
-    species_list = ["elegans"]
+    species_list = ["elegans", "fly"]
     final_data = defaultdict(list)
+
     for species in species_list:
         overlapping_path = Path(
             f"./results/final-inferred-complete/{species}/overlapping_neighbor_data.csv"
@@ -58,7 +58,9 @@ def main():
         degree_path = Path(
             f"./results/final-inferred-complete/{species}/protein_degree_v3_data.csv"
         )
-        rw_path = Path(f"./results/final-inferred-complete/{species}/random_walk_data_v2.csv")
+        rw_path = Path(
+            f"./results/final-inferred-complete/{species}/random_walk_data_v2.csv"
+        )
 
         species_path = [overlapping_path, hypergeometric_path, degree_path, rw_path]
 
@@ -88,29 +90,31 @@ def main():
         }
         final_data[species].append(species_data)
 
-    for species in species_list:
-        # # plot the images
-        fig_width = 10  # width in inches
-        fig_height = 7  # height in inches
-        fig_dpi = 100  # dots per inch for the figure
-        save_dpi = 200  # dots per inch for the saved image
-        plt.figure(figsize=(fig_width, fig_height), dpi=fig_dpi)
+    # Create a figure with 2 subplots (one for each species)
+    fig, axes = plt.subplots(1, 2, figsize=(14, 7))  # 1 row, 2 columns
+
+    for idx, species in enumerate(species_list):
+        ax = axes[idx]  # Get the subplot axis for the species
 
         for i in range(len(final_data[species][0]["method"])):
             create_plot(
-            final_data[species][0]["fpr"][i],
-            final_data[species][0]["tpr"][i],
-            final_data[species][0]["roc"][i],
-            final_data[species][0]["method"][i],
-        )
+                ax,
+                final_data[species][0]["fpr"][i],
+                final_data[species][0]["tpr"][i],
+                final_data[species][0]["roc"][i],
+                final_data[species][0]["method"][i],
+            )
 
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("Receiver Operating Characteristic")
-        plt.legend(loc="lower right")
-        plt.show()
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.set_title(f"ROC Curve for {species.capitalize()}")
+        ax.legend(loc="lower right")
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
