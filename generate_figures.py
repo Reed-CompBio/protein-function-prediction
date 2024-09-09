@@ -33,6 +33,8 @@ def get_roc_data(data_df: dict) -> list:
 
     return fpr, tpr, threshold, roc_auc
 
+# def create_plot()
+
 
 def main():
     print("Generating figures")
