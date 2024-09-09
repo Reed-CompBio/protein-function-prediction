@@ -33,11 +33,11 @@ def get_roc_data(data_df: dict) -> list:
     return fpr, tpr, threshold, roc_auc
 
 
-def create_plot(ax, x_data: list, y_data: list, auc: float, type: str) -> None:
+def create_plot(ax, x_data: list, y_data: list, auc: float, type: str, color) -> None:
     ax.plot(
         x_data,
         y_data,
-        color="red",
+        color=color,
         lw=2,
         label=f"{type}(area = %0.2f)" % auc,
     )
@@ -91,10 +91,12 @@ def main():
         final_data[species].append(species_data)
 
     # Create a figure with 2 subplots (one for each species)
-    fig, axes = plt.subplots(1, 2, figsize=(14, 7))  # 1 row, 2 columns
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))  # Create a 2x3 grid of subplots
+    axes = axes.flatten()
+    colors = ["red", "green", "blue", "orange", "purple"]
 
     for idx, species in enumerate(species_list):
-        ax = axes[idx // 3, idx % 3]  # Use integer division and modulus to access the 2D grid of subplots
+        ax = axes[idx]  # Get the subplot axis for the current species
 
         for i in range(len(final_data[species][0]["method"])):
             create_plot(
@@ -103,6 +105,7 @@ def main():
                 final_data[species][0]["tpr"][i],
                 final_data[species][0]["roc"][i],
                 final_data[species][0]["method"][i],
+                colors[i]
             )
 
         ax.set_xlim([0.0, 1.0])
@@ -112,7 +115,7 @@ def main():
         ax.set_title(f"ROC Curve for {species.capitalize()}")
         ax.legend(loc="lower right")
 
-    # Adjust layout
+    axes[5].set_visible(False)
     plt.tight_layout()
     plt.show()
 
