@@ -1,3 +1,4 @@
+from collections import defaultdict
 from pathlib import Path
 
 from matplotlib import pyplot as plt
@@ -46,18 +47,18 @@ def main():
     print("Generating figures")
     # read in the files and get the score and label
     species_list = ["elegans"]
-    final_data = {}
+    final_data = defaultdict(list)
     for species in species_list:
         overlapping_path = Path(
-            "./results/final-inferred-complete/elegans/overlapping_neighbor_data.csv"
+            f"./results/final-inferred-complete/{species}/overlapping_neighbor_data.csv"
         )
         hypergeometric_path = Path(
-            "./results/final-inferred-complete/elegans/hypergeometric_distribution.csv"
+            f"./results/final-inferred-complete/{species}/hypergeometric_distribution.csv"
         )
         degree_path = Path(
-            "./results/final-inferred-complete/elegans/protein_degree_v3_data.csv"
+            f"./results/final-inferred-complete/{species}/protein_degree_v3_data.csv"
         )
-        rw_path = Path("./results/final-inferred-complete/elegans/random_walk_data_v2.csv")
+        rw_path = Path(f"./results/final-inferred-complete/{species}/random_walk_data_v2.csv")
 
         species_path = [overlapping_path, hypergeometric_path, degree_path, rw_path]
 
@@ -85,7 +86,7 @@ def main():
             "roc": roc_auc_list,
             "method": ["Overlapping", "Hypergeometric", "Degree", "RW"],
         }
-        final_data.append(species, species_data)
+        final_data[species].append(species_data)
 
     for species in species_list:
         # # plot the images
@@ -95,13 +96,12 @@ def main():
         save_dpi = 200  # dots per inch for the saved image
         plt.figure(figsize=(fig_width, fig_height), dpi=fig_dpi)
 
-        for i in range(len(final_data[species]["method"])):
-            print(i)
+        for i in range(len(final_data[species][0]["method"])):
             create_plot(
-            final_data[species]["fpr"][i],
-            final_data[species]["tpr"][i],
-            final_data[species]["roc"][i],
-            final_data[species]["method"][i],
+            final_data[species][0]["fpr"][i],
+            final_data[species][0]["tpr"][i],
+            final_data[species][0]["roc"][i],
+            final_data[species][0]["method"][i],
         )
 
         plt.xlim([0.0, 1.0])
