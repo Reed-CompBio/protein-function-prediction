@@ -56,23 +56,33 @@ def main():
     )
     rw_path = Path("./results/final-inferred-complete/elegans/random_walk_data_v2.csv")
 
-    overlapping_df = read_file(overlapping_path)
-    hypergeometric_df = read_file(hypergeometric_path)
-    degree_df = read_file(degree_path)
-    rw_df = read_file(rw_path)
+    species_path = [overlapping_path, hypergeometric_path, degree_path, rw_path]
+
+    methods = []
+    for path in species_path:
+        data = read_file(path)
+        methods.append(data)
 
     # calculate AUC values
-    fpr1, tpr1, threshold1, roc_auc1 = get_roc_data(overlapping_df)
-    fpr2, tpr2, threshold2, roc_auc2 = get_roc_data(hypergeometric_df)
-    fpr3, tpr3, threshold3, roc_auc3 = get_roc_data(degree_df)
-    fpr4, tpr4, threshold4, roc_auc4 = get_roc_data(rw_df)
+    fpr_list = []
+    tpr_list = []
+    threshold_list = []
+    roc_auc_list = []
+
+    for data in methods:
+        fpr, tpr, threshold, roc_auc = get_roc_data(data)
+        fpr_list.append(fpr)
+        tpr_list.append(tpr)
+        threshold_list.append(threshold)
+        roc_auc_list.append(roc_auc)
 
     elegans = {
-        "fpr": [fpr1, fpr2, fpr3, fpr4],
-        "tpr": [tpr1, tpr2, tpr3, tpr4],
-        "roc": [roc_auc1, roc_auc2, roc_auc3, roc_auc4],
+        "fpr": fpr_list,
+        "tpr": tpr_list,
+        "roc": roc_auc_list,
         "method": ["Overlapping", "Hypergeometric", "Degree", "RW"],
     }
+
     final_data = {"elegans": elegans}
 
     # # plot the images
@@ -82,22 +92,14 @@ def main():
     save_dpi = 200  # dots per inch for the saved image
     plt.figure(figsize=(fig_width, fig_height), dpi=fig_dpi)
 
-    create_plot(
-        final_data["elegans"]["fpr"][0],
-        final_data["elegans"]["tpr"][0],
-        final_data["elegans"]["roc"][0],
-        final_data["elegans"]["method"][0],
+    for i in range(len(final_data["elegans"]["method"])):
+        print(i)
+        create_plot(
+        final_data["elegans"]["fpr"][i],
+        final_data["elegans"]["tpr"][i],
+        final_data["elegans"]["roc"][i],
+        final_data["elegans"]["method"][i],
     )
-    create_plot(
-        final_data["elegans"]["fpr"][0],
-        final_data["elegans"]["tpr"][0],
-        final_data["elegans"]["roc"][0],
-        final_data["elegans"]["method"][0],
-    )
-    
-    # create_plot(fpr2, tpr2, roc_auc2, "hypergeometric")
-    # create_plot(fpr3, tpr3, roc_auc3, "degree")
-    # create_plot(fpr4, tpr4, roc_auc4, "rw")
 
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
