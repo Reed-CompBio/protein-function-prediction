@@ -45,7 +45,7 @@ def create_plot(ax, x_data: list, y_data: list, auc: float, type: str) -> None:
 
 def main():
     print("Generating figures")
-    species_list = ["elegans", "fly"]
+    species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
     final_data = defaultdict(list)
 
     for species in species_list:
@@ -94,7 +94,7 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(14, 7))  # 1 row, 2 columns
 
     for idx, species in enumerate(species_list):
-        ax = axes[idx]  # Get the subplot axis for the species
+        ax = axes[idx // 3, idx % 3]  # Use integer division and modulus to access the 2D grid of subplots
 
         for i in range(len(final_data[species][0]["method"])):
             create_plot(
