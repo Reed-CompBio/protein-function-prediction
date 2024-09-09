@@ -10,6 +10,11 @@ from classes.sample_algorithm import SampleAlgorithm
 from classes.base_algorithm_class import BaseAlgorithm
 from classes.hypergeometric_distribution_class import HypergeometricDistribution
 from classes.hypergeometric_distribution_class_V2 import HypergeometricDistributionV2
+from classes.random_walk_class import RandomWalk
+from classes.random_walk_class_v2 import RandomWalkV2
+from classes.random_walk_class_v3 import RandomWalkV3
+from classes.random_walk_class_v4 import RandomWalkV4
+from classes.random_walk_class_v5 import RandomWalkV5
 
 from pathlib import Path
 from tools.workflow import run_experiement
@@ -74,6 +79,11 @@ def test_algorithm_experiment():
         "ProteinDegreeV3": ProteinDegreeV3,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
+        "RandomWalk": RandomWalk,
+        "RandomWalkV2": RandomWalkV2,
+        "RandomWalkV3": RandomWalkV3, 
+        "RandomWalkV4": RandomWalkV4,
+        "RandomWalkV5": RandomWalkV5,
     }
 
     results = run_experiement(
@@ -88,25 +98,35 @@ def test_algorithm_experiment():
         "_mol_bio_cel",
     )
     roc_results = {
-        "OverlappingNeighbors": 0.5,
-        "OverlappingNeighborsV2": 0.6799999999999999,
-        "OverlappingNeighborsV3": 0.6,
-        "ProteinDegree": 0.86,
-        "ProteinDegreeV2": 0.635,
-        "ProteinDegreeV3": 0.855,
-        "HypergeometricDistribution": 0.6599999999999999,
-        "HypergeometricDistributionV2": 0.72,
+        "OverlappingNeighbors": 0.61,
+        "OverlappingNeighborsV2": 0.725,
+        "OverlappingNeighborsV3": 0.745,
+        "ProteinDegree": 0.7,
+        "ProteinDegreeV2": 0.49000000000000005,
+        "ProteinDegreeV3": 0.8099999999999999,
+        "HypergeometricDistribution": 0.81,
+        "HypergeometricDistributionV2": 0.9199999999999999,
+        "RandomWalk": 0.99,
+        "RandomWalkV2": 0.87,
+        "RandomWalkV3": 0.88,
+        "RandomWalkV4": 0.71,
+        "RandomWalkV5": 0.93,
     }
 
     pr_results = {
-        "ProteinDegreeV3": 0.852965367965368,
-        "ProteinDegree": 0.8828661616161616,
-        "OverlappingNeighborsV3": 0.6363911114685108,
-        "OverlappingNeighborsV2": 0.7768889469663462,
-        "ProteinDegreeV2": 0.7558547008547009,
-        "OverlappingNeighbors": 0.5636528325905261,
-        "HypergeometricDistribution": 0.7131199315390491,
-        "HypergeometricDistributionV2": 0.7647093837535013,
+        "OverlappingNeighbors": 0.7155291006722895,
+        "OverlappingNeighborsV2": 0.6146794178044178,
+        "OverlappingNeighborsV3": 0.6313659257409258,
+        "ProteinDegree": 0.720191058941059,
+        "ProteinDegreeV2": 0.4746853146853147,
+        "ProteinDegreeV3": 0.7830150405150405,
+        "HypergeometricDistribution": 0.83235581412052,
+        "HypergeometricDistributionV2": 0.9287140637140637,
+        "RandomWalk": 0.9904545454545454,
+        "RandomWalkV2": 0.8913956876456876,
+        "RandomWalkV3": 0.89892094017094,
+        "RandomWalkV4": 0.7505560166957226,
+        "RandomWalkV5": 0.9228102453102452,
     }
     
     for algorithm, metrics in results.items():
@@ -139,6 +159,11 @@ def test_multiple_input_files():
         "ProteinDegreeV3": ProteinDegreeV3,
         "HypergeometricDistribution": HypergeometricDistribution,
         "HypergeometricDistributionV2": HypergeometricDistributionV2,
+        "RandomWalk": RandomWalk,
+        "RandomWalkV2": RandomWalkV2,
+        "RandomWalkV3": RandomWalkV3,
+        "RandomWalkV4": RandomWalkV4,
+        "RandomWalkV5": RandomWalkV5,
     }
     
     run_workflow(
@@ -156,46 +181,67 @@ def test_multiple_input_files():
         False,
     )
     roc_mean_results = {
-        "OverlappingNeighbors": 0.640,
-        "OverlappingNeighborsV2": 0.718,
-        "OverlappingNeighborsV3": 0.696,
-        "ProteinDegree": 0.803,
-        "ProteinDegreeV2": 0.671,
-        "ProteinDegreeV3": 0.839,
-        "HypergeometricDistribution": 0.672,
-        "HypergeometricDistributionV2": 0.862,
-    }
-    roc_sd_results = {
-        "OverlappingNeighbors": 0.13285,
-        "OverlappingNeighborsV2": 0.04087,
-        "OverlappingNeighborsV3": 0.06786,
-        "ProteinDegree": 0.06068,
-        "ProteinDegreeV2": 0.04068,
-        "ProteinDegreeV3": 0.06749,
-        "HypergeometricDistribution": 0.01643,
-        "HypergeometricDistributionV2": 0.09985,
+        "OverlappingNeighbors": 0.698,
+        "OverlappingNeighborsV2": 0.806,
+        "OverlappingNeighborsV3": 0.796,
+        "ProteinDegree": 0.76,
+        "ProteinDegreeV2": 0.619,
+        "ProteinDegreeV3": 0.759,
+        "HypergeometricDistribution": 0.788,
+        "HypergeometricDistributionV2": 0.934,
+        "RandomWalk": 0.988,
+        "RandomWalkV2": 0.91,
+        "RandomWalkV3": 0.914,
+        "RandomWalkV4": 0.77,
+        "RandomWalkV5": 0.924,
     }
 
+    roc_sd_results = {
+        "OverlappingNeighbors": 0.06419,
+        "OverlappingNeighborsV2": 0.08466,
+        "OverlappingNeighborsV3": 0.07561,
+        "ProteinDegree": 0.09247,
+        "ProteinDegreeV2": 0.14935,
+        "ProteinDegreeV3": 0.07619,
+        "HypergeometricDistribution": 0.14167,
+        "HypergeometricDistributionV2": 0.0493,
+        "RandomWalk": 0.00837,
+        "RandomWalkV2": 0.08573,
+        "RandomWalkV3": 0.08081,
+        "RandomWalkV4": 0.11247,
+        "RandomWalkV5": 0.07987,
+    }
+    
     pr_mean_results = {
-        "OverlappingNeighbors": 0.63917,
-        "OverlappingNeighborsV2": 0.74472,
-        "OverlappingNeighborsV3": 0.69077,
-        "ProteinDegree": 0.81523,
-        "ProteinDegreeV2": 0.69686,
-        "ProteinDegreeV3": 0.83840,
-        "HypergeometricDistribution": 0.70979,
-        "HypergeometricDistributionV2": 0.84226,
+        "OverlappingNeighbors": 0.70429,
+        "OverlappingNeighborsV2": 0.79163,
+        "OverlappingNeighborsV3": 0.76839,
+        "ProteinDegree": 0.76441,
+        "ProteinDegreeV2": 0.66936,
+        "ProteinDegreeV3": 0.72171,
+        "HypergeometricDistribution": 0.81856,
+        "HypergeometricDistributionV2": 0.92057,
+        "RandomWalk": 0.98868,
+        "RandomWalkV2": 0.92106,
+        "RandomWalkV3": 0.92387,
+        "RandomWalkV4": 0.82391,
+        "RandomWalkV5": 0.92862,
     }
 
     pr_sd_results = {
-        "OverlappingNeighbors": 0.11003,
-        "OverlappingNeighborsV2": 0.06251,
-        "OverlappingNeighborsV3": 0.08707,
-        "ProteinDegree": 0.05213,
-        "ProteinDegreeV2": 0.04951,
-        "ProteinDegreeV3": 0.06645,
-        "HypergeometricDistribution": 0.08328,
-        "HypergeometricDistributionV2": 0.12172,
+        "OverlappingNeighbors": 0.07198,
+        "OverlappingNeighborsV2": 0.12493,
+        "OverlappingNeighborsV3": 0.12056,
+        "ProteinDegree": 0.08261,
+        "ProteinDegreeV2": 0.1476,
+        "ProteinDegreeV3": 0.06049,
+        "HypergeometricDistribution": 0.06292,
+        "HypergeometricDistributionV2": 0.07011,
+        "RandomWalk": 0.00789,
+        "RandomWalkV2": 0.07642,
+        "RandomWalkV3": 0.07319,
+        "RandomWalkV4": 0.08392,
+        "RandomWalkV5": 0.06955,
     }
 
     df = pd.read_csv("./output/data/5_repeated_auc_values.csv", sep = "\t").to_dict()

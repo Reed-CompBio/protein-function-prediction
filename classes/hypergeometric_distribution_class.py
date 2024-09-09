@@ -48,9 +48,9 @@ class HypergeometricDistribution(BaseAlgorithm):
         data = {
             "protein": [],
             "go_term": [],
-            "pro_pro_neighbor": [],
+            "protein_neighbor": [],
             "go_neighbor": [],
-            "go_annotated_pro_pro_neighbors": [],
+            "go_annotated_protein_neighbors": [],
             "score": [],
             "norm_score": [],
             "true_label": [],
@@ -68,36 +68,45 @@ class HypergeometricDistribution(BaseAlgorithm):
         ):
 
             # calculate the score for the positive set
-            positive_pro_pro_neighbor = get_neighbors(
-                G, positive_protein, "protein_protein"
+            positive_protein_neighbor = get_neighbors(
+                G, positive_protein, ["protein_protein", "regulatory"]
             )
-            positive_go_neighbor = get_neighbors(G, positive_go, "protein_go_term")
-            positive_go_annotated_pro_pro_neighbor_count = (
-                get_go_annotated_pro_pro_neighbor_count(
-                    G, positive_pro_pro_neighbor, positive_go
+            positive_go_neighbor = get_neighbors(G, positive_go, ["protein_go_term"])
+            positive_go_annotated_protein_neighbor_count = (
+                get_go_annotated_protein_neighbor_count(
+                    G, positive_protein_neighbor, positive_go
                 )
             )
 
             N = len([x for x,y in G.nodes(data=True) if y['type']=="protein"]) #Total number of protein nodes in the entire graph
-            pos_n = len(positive_pro_pro_neighbor) #Number of protein neighbors the protein of interest has
+            pos_n = len(positive_protein_neighbor) #Number of protein neighbors the protein of interest has
             K = len(positive_go_neighbor) - 1 #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
-            pos_k = positive_go_annotated_pro_pro_neighbor_count #The overlap between the GO protein neighbors and protein neighbors of the protein of interest
-            
+            pos_k = positive_go_annotated_protein_neighbor_count #The overlap between the GO protein neighbors and protein neighbors of the protein of interest
+
+
+            # if K == -1:
+            #     K = 1
+
+            # print("N: ", N)
+            # print("pos_n: ", pos_n)
+            # print("K: ", K)
+            # print("pos_k: ", pos_k)
+
             #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
             positive_score = 1 - ((math.comb(K,pos_k)*math.comb(N-K,pos_n-pos_k))/math.comb(N,pos_n))
                 
             # calculate the score for the negative set
-            negative_pro_pro_neighbor = get_neighbors(
+            negative_protein_neighbor = get_neighbors(
                 G, negative_protein, "protein_protein"
             )
             negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
             negative_go_annotated_protein_neighbor_count = (
-                get_go_annotated_pro_pro_neighbor_count(
-                    G, negative_pro_pro_neighbor, negative_go
+                get_go_annotated_protein_neighbor_count(
+                    G, negative_protein_neighbor, negative_go
                 )
             )
 
-            neg_n = len(negative_pro_pro_neighbor) #Negative protein of interest neighbors
+            neg_n = len(negative_protein_neighbor) #Negative protein of interest neighbors
             neg_k = negative_go_annotated_protein_neighbor_count #Overlap between go neighbors and protein neighbors (should be fewer for neg than pos)
 
             negative_score = 1 - ((math.comb(K,neg_k)*math.comb(N-K,neg_n-neg_k))/math.comb(N,neg_n))
@@ -106,19 +115,19 @@ class HypergeometricDistribution(BaseAlgorithm):
             # input positive and negative score to data
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
-            data["pro_pro_neighbor"].append(len(positive_pro_pro_neighbor))
+            data["protein_neighbor"].append(len(positive_protein_neighbor))
             data["go_neighbor"].append(len(positive_go_neighbor))
-            data["go_annotated_pro_pro_neighbors"].append(
-                positive_go_annotated_pro_pro_neighbor_count
+            data["go_annotated_protein_neighbors"].append(
+                positive_go_annotated_protein_neighbor_count
             )
             data["score"].append(positive_score)
             data["true_label"].append(1)
 
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
-            data["pro_pro_neighbor"].append(len(negative_pro_pro_neighbor))
+            data["protein_neighbor"].append(len(negative_protein_neighbor))
             data["go_neighbor"].append(len(negative_go_neighbor))
-            data["go_annotated_pro_pro_neighbors"].append(
+            data["go_annotated_protein_neighbors"].append(
                 negative_go_annotated_protein_neighbor_count
             )
             data["score"].append(negative_score)
@@ -146,18 +155,18 @@ class HypergeometricDistribution(BaseAlgorithm):
         return y_score, y_true
 
 
-def get_neighbors(G: nx.Graph, node, edgeType):
+def get_neighbors(G: nx.DiGraph, node, edgeTypes):
     res = G.edges(node, data=True)
     neighbors = []
     for edge in res:
-        if edge[2]["type"] == edgeType:
+        if edge[2]["type"] in edgeTypes:
             neighborNode = [edge[1], edge[2]]
             neighbors.append(neighborNode)
 
     return neighbors
 
 
-def get_go_annotated_pro_pro_neighbor_count(G: nx.Graph, nodeList, goTerm):
+def get_go_annotated_protein_neighbor_count(G: nx.Graph, nodeList, goTerm):
     count = 0
     for element in nodeList:
         if G.has_edge(element[0], goTerm):
