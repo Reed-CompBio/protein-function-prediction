@@ -36,7 +36,7 @@ def get_roc_data(data_df: dict) -> list:
 def get_pr_data(data_df: dict) -> list:
     y = np.array(data_df["y_true"])
     scores = np.array(data_df["y_score"])
-    precision, recall , _= precision_recall_curve(y, scores)
+    precision, recall, _ = precision_recall_curve(y, scores)
     pr_auc = auc(recall, precision)
 
     return precision, recall, pr_auc
@@ -56,7 +56,7 @@ def main():
     print("Generating figures")
     species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
     file_directory = "./results/final-non-inferred-complete/"
-    final_data = defaultdict(list)
+    final_category_data = defaultdict(list)
 
     for species in species_list:
         overlapping_path = Path(
@@ -105,7 +105,7 @@ def main():
             "pr": pr_auc_list,
             "method": ["Overlapping", "Hypergeometric", "Degree", "RW"],
         }
-        final_data[species].append(species_data)
+        final_category_data[species].append(species_data)
 
     # Create a figure with 2 subplots (one for each species)
     fig, axes = plt.subplots(2, 3, figsize=(18, 10))  # Create a 2x3 grid of subplots
@@ -115,13 +115,13 @@ def main():
     for idx, species in enumerate(species_list):
         ax = axes[idx]  # Get the subplot axis for the current species
 
-        for i in range(len(final_data[species][0]["method"])):
+        for i in range(len(final_category_data[species][0]["method"])):
             create_plot(
                 ax,
-                final_data[species][0]["fpr"][i],
-                final_data[species][0]["tpr"][i],
-                final_data[species][0]["roc"][i],
-                final_data[species][0]["method"][i],
+                final_category_data[species][0]["fpr"][i],
+                final_category_data[species][0]["tpr"][i],
+                final_category_data[species][0]["roc"][i],
+                final_category_data[species][0]["method"][i],
                 colors[i],
             )
 
@@ -144,13 +144,13 @@ def main():
     for idx, species in enumerate(species_list):
         ax = axes[idx]  # Get the subplot axis for the current species
 
-        for i in range(len(final_data[species][0]["method"])):
+        for i in range(len(final_category_data[species][0]["method"])):
             create_plot(
                 ax,
-                final_data[species][0]["precision"][i],
-                final_data[species][0]["recall"][i],
-                final_data[species][0]["pr"][i],
-                final_data[species][0]["method"][i],
+                final_category_data[species][0]["precision"][i],
+                final_category_data[species][0]["recall"][i],
+                final_category_data[species][0]["pr"][i],
+                final_category_data[species][0]["method"][i],
                 colors[i],
             )
 
@@ -166,6 +166,94 @@ def main():
         "Precision/Recall Curve for All Species w/ Complete Inferred Networks",
         fontsize=20,
     )
+    plt.tight_layout()
+    plt.show()
+
+    # generate RW figures
+
+    species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
+    file_directories = [
+        "./results/final-rw-inferred-regular/",
+        "./results/final-rw-inferred-pro-go/",
+        "./results/final-rw-non-inferred-regular/",
+        "./results/final-rw-non-inferred-pro-go/",
+    ]
+    final_rw_data = defaultdict(list)
+
+    # Load data for each directory and species
+    for directory in file_directories:
+        for species in species_list:
+            rw_path = Path(directory, f"{species}/random_walk_data_v2.csv")
+            data = read_file(rw_path)
+
+            # calculate AUC values
+            fpr, tpr, threshold, roc_auc = get_roc_data(data)
+            precision, recall, pr_auc = get_pr_data(data)
+
+            species_data = {
+                "fpr": fpr,
+                "tpr": tpr,
+                "roc": roc_auc,
+                "precision": precision,
+                "recall": recall,
+                "pr": pr_auc,
+            }
+            final_rw_data[species].append(species_data)
+
+    # Create a 2x2 subplot layout
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))  # 2 rows, 2 columns
+    axs = axs.flatten()  # Flatten to easily index the subplots
+
+    colors = ["red", "green", "blue", "orange", "purple"]
+
+    # Plot data for each directory on a subplot
+    for idx, directory in enumerate(file_directories):
+        ax = axs[idx]  # Get the corresponding subplot
+        for i, species in enumerate(species_list):
+            ax.plot(
+                final_rw_data[species][idx]["fpr"],
+                final_rw_data[species][idx]["tpr"],
+                color=colors[i],
+                lw=2,
+                label=f"{species} (area = %0.2f)" % final_rw_data[species][idx]["roc"],
+            )
+
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.set_title(f"{directory}")
+        ax.legend(loc="lower right")
+
+    # Adjust layout and show the plot
+    plt.tight_layout()
+    plt.show()
+
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))  # 2 rows, 2 columns
+    axs = axs.flatten()  # Flatten to easily index the subplots
+
+    colors = ["red", "green", "blue", "orange", "purple"]
+
+    # Plot data for each directory on a subplot
+    for idx, directory in enumerate(file_directories):
+        ax = axs[idx]  # Get the corresponding subplot
+        for i, species in enumerate(species_list):
+            ax.plot(
+                final_rw_data[species][idx]["precision"],
+                final_rw_data[species][idx]["recall"],
+                color=colors[i],
+                lw=2,
+                label=f"{species} (area = %0.2f)" % final_rw_data[species][idx]["roc"],
+            )
+
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        ax.set_xlabel("Precision")
+        ax.set_ylabel("Recall")
+        ax.set_title(f"{directory}")
+        ax.legend(loc="lower right")
+
+    # Adjust layout and show the plot
     plt.tight_layout()
     plt.show()
 
