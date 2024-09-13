@@ -51,15 +51,12 @@ class SampleAlgorithm(BaseAlgorithm):
 
         i = 1
         # iterate through the positive and negative dataset and calculate the method's prediction score
-        for positive_protein, positive_go, negative_protein, negative_go in zip(
+        for positive_protein, positive_go in zip(
             positive_dataset["protein"],
             positive_dataset["go"],
-            negative_dataset["protein"],
-            negative_dataset["go"],
         ):
             # prediction logic for the positive and negative data set entry
             positive_score = random.random()
-            negative_score = random.random()
 
             # input the positive data
             data["protein"].append(positive_protein)
@@ -67,12 +64,24 @@ class SampleAlgorithm(BaseAlgorithm):
             data["score"].append(positive_score)
             data["true_label"].append(1)
 
+            print_progress(i, len(positive_dataset["protein"]))
+            i += 1
+
+        i = 1
+        # iterate through the positive and negative dataset and calculate the method's prediction score
+        for negative_protein, negative_go in zip(
+            negative_dataset["protein"],
+            negative_dataset["go"],
+        ):
+            # prediction logic for the positive and negative data set entry
+            negative_score = random.random()
+
             # input the negative data
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
             data["score"].append(negative_score)
             data["true_label"].append(0)
-            print_progress(i, len(positive_dataset["protein"]))
+            print_progress(i, len(negative_dataset["protein"]))
             i += 1
 
         # need to normalise the data

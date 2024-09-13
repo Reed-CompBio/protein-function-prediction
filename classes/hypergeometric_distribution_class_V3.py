@@ -16,10 +16,10 @@ class HypergeometricDistributionV3(BaseAlgorithm):
 
     def get_y_score(self):
         return self.y_score
-    
+
     def get_y_true(self):
         return self.y_true
-    
+
     def set_y_score(self, y_score):
         self.y_score = y_score
 
@@ -35,7 +35,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
         name,
     ):
         """
-        Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of 
+        Uses a Hypergeometric distribution to calculate a confidence value for the relationship between a protein of
         interest and a GO term. Does not include protein of interest in calculations.
         """
         colorama_init()
@@ -56,15 +56,16 @@ class HypergeometricDistributionV3(BaseAlgorithm):
             "true_label": [],
         }
 
-        positive_dataset, negative_dataset = get_datasets(input_directory_path, rep_num, name)
+        positive_dataset, negative_dataset = get_datasets(
+            input_directory_path, rep_num, name
+        )
         G = import_graph_from_pickle(graph_file_path)
-
+        N = len(
+            [x for x, y in G.nodes(data=True) if y["type"] == "protein"]
+        )  # Total number of protein nodes in the entire graph
         i = 1
-        for positive_protein, positive_go, negative_protein, negative_go in zip(
-            positive_dataset["protein"],
-            positive_dataset["go"],
-            negative_dataset["protein"],
-            negative_dataset["go"],
+        for positive_protein, positive_go in zip(
+            positive_dataset["protein"], positive_dataset["go"]
         ):
 
             # calculate the score for the positive set
@@ -78,37 +79,23 @@ class HypergeometricDistributionV3(BaseAlgorithm):
                 )
             )
 
-            N = len([x for x,y in G.nodes(data=True) if y['type']=="protein"]) #Total number of protein nodes in the entire graph
-            pos_n = len(positive_protein_neighbor) #Number of protein neighbors the protein of interest has
-            K = len(positive_go_neighbor) - 1 #Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
-            pos_k = positive_go_annotated_protein_neighbor_count #The overlap between the GO protein neighbors and protein neighbors of the protein of interest
+            pos_n = len(
+                positive_protein_neighbor
+            )  # Number of protein neighbors the protein of interest has
+            K = (
+                len(positive_go_neighbor) - 1
+            )  # Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
+            pos_k = positive_go_annotated_protein_neighbor_count  # The overlap between the GO protein neighbors and protein neighbors of the protein of interest
 
             if pos_n == 0:
                 positive_score = 0
-            else: 
-                #The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
-                positive_score = 1 - ((math.comb(K,pos_k)*math.comb(N-K,pos_n-pos_k))/math.comb(N,pos_n))
-                
-            # calculate the score for the negative set
-            negative_protein_neighbor = get_neighbors(
-                G, negative_protein, "protein_protein"
-            )
-            negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
-            negative_go_annotated_protein_neighbor_count = (
-                get_go_annotated_protein_neighbor_count(
-                    G, negative_protein_neighbor, negative_go
-                )
-            )
-
-            neg_n = len(negative_protein_neighbor) #Negative protein of interest neighbors
-            neg_k = negative_go_annotated_protein_neighbor_count #Overlap between go neighbors and protein neighbors (should be fewer for neg than pos)
-
-            if neg_n == 0:
-                negative_score = 0
             else:
-                negative_score = 1 - ((math.comb(K + 1,neg_k)*math.comb(N-K + 1,neg_n-neg_k))/math.comb(N,neg_n))
+                # The hypergeometric function using variables above, math.comb(n,k) is an n choose k function
+                positive_score = 1 - (
+                    (math.comb(K, pos_k) * math.comb(N - K, pos_n - pos_k))
+                    / math.comb(N, pos_n)
+                )
 
-            
             # input positive and negative score to data
             data["protein"].append(positive_protein)
             data["go_term"].append(positive_go)
@@ -120,6 +107,42 @@ class HypergeometricDistributionV3(BaseAlgorithm):
             data["score"].append(positive_score)
             data["true_label"].append(1)
 
+            print_progress(i, len(positive_dataset["protein"]))
+            i += 1
+
+        i = 0
+        for negative_protein, negative_go in zip(
+            negative_dataset["protein"],
+            negative_dataset["go"],
+        ):
+
+            # calculate the score for the negative set
+            negative_protein_neighbor = get_neighbors(
+                G, negative_protein, "protein_protein"
+            )
+            negative_go_neighbor = get_neighbors(G, negative_go, "protein_go_term")
+            negative_go_annotated_protein_neighbor_count = (
+                get_go_annotated_protein_neighbor_count(
+                    G, negative_protein_neighbor, negative_go
+                )
+            )
+            K = (
+                len(negative_go_neighbor) - 1
+            )  # Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
+
+            neg_n = len(
+                negative_protein_neighbor
+            )  # Negative protein of interest neighbors
+            neg_k = negative_go_annotated_protein_neighbor_count  # Overlap between go neighbors and protein neighbors (should be fewer for neg than pos)
+
+            if neg_n == 0:
+                negative_score = 0
+            else:
+                negative_score = 1 - (
+                    (math.comb(K + 1, neg_k) * math.comb(N - K + 1, neg_n - neg_k))
+                    / math.comb(N, neg_n)
+                )
+
             data["protein"].append(negative_protein)
             data["go_term"].append(negative_go)
             data["protein_neighbor"].append(len(negative_protein_neighbor))
@@ -130,7 +153,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
             data["score"].append(negative_score)
             data["true_label"].append(0)
 
-            print_progress(i, len(positive_dataset["protein"]))
+            print_progress(i, len(negative_dataset["protein"]))
             i += 1
 
         normalized_data = normalize(data["score"])
