@@ -126,8 +126,8 @@ class HypergeometricDistributionV3(BaseAlgorithm):
                     G, negative_protein_neighbor, negative_go
                 )
             )
-            K = (
-                len(negative_go_neighbor) - 1
+            K = len(
+                negative_go_neighbor
             )  # Number of protein neighbors the GO term of interest has, same for pos & neg, does not include protein of interest (but does not change significantly if protein is included)
 
             neg_n = len(
@@ -139,7 +139,7 @@ class HypergeometricDistributionV3(BaseAlgorithm):
                 negative_score = 0
             else:
                 negative_score = 1 - (
-                    (math.comb(K + 1, neg_k) * math.comb(N - K + 1, neg_n - neg_k))
+                    (math.comb(K, neg_k) * math.comb(N - K, neg_n - neg_k))
                     / math.comb(N, neg_n)
                 )
 
