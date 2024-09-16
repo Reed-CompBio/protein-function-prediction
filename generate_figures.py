@@ -111,7 +111,7 @@ def main():
                 "precision": precision_list,
                 "recall": recall_list,
                 "pr": pr_auc_list,
-                "method": ["Overlapping", "Hypergeometric", "Degree", "RW"],
+                "method": ["One-Hop GO Degree", "Hypergeometric", "Degree", "RW"],
             }
             final_category_data[species].append(species_data)
 
