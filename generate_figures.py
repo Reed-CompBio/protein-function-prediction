@@ -55,6 +55,8 @@ def create_plot(ax, x_data: list, y_data: list, auc: float, type: str, color) ->
 def main():
     print("Generating figures")
     species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
+    species_title = ["C. elegans", "D. melanogaster", "B. subtilis", "S. cerevisiae", "D. rerio"]
+
     file_directories = [
         "./results/final-non-inferred-complete/",
         "./results/final-inferred-complete/",
@@ -137,7 +139,7 @@ def main():
             ax.set_ylim([0.0, 1.05])
             ax.set_xlabel("False Positive Rate")
             ax.set_ylabel("True Positive Rate")
-            ax.set_title(f"{species.capitalize()}")
+            ax.set_title(f"{species_title[idx].capitalize()}")
             ax.legend(loc="lower right")
 
         axes[5].set_visible(False)
@@ -169,7 +171,7 @@ def main():
             ax.set_ylim([0.0, 1.05])
             ax.set_xlabel("Recall")
             ax.set_ylabel("Precision")
-            ax.set_title(f"{species.capitalize()}")
+            ax.set_title(f"{species_title[idx].capitalize()}")
             ax.legend(loc="lower right")
 
         axes[5].set_visible(False)
@@ -234,7 +236,7 @@ def main():
                 final_rw_data[species][idx]["tpr"],
                 color=colors[i],
                 lw=2,
-                label=f"{species} (area = %0.2f)" % final_rw_data[species][idx]["roc"],
+                label=f"{species_title[i]} (area = %0.2f)" % final_rw_data[species][0]["roc"],
             )
 
         ax.set_xlim([0.0, 1.0])
@@ -267,7 +269,7 @@ def main():
                 final_rw_data[species][idx]["precision"],
                 color=colors[i],
                 lw=2,
-                label=f"{species} (area = %0.2f)" % final_rw_data[species][idx]["roc"],
+                label=f"{species_title[i]} (area = %0.2f)" % final_rw_data[species][0]["pr"],
             )
 
         ax.set_xlim([0.0, 1.0])
