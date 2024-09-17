@@ -111,13 +111,13 @@ def main():
                 "precision": precision_list,
                 "recall": recall_list,
                 "pr": pr_auc_list,
-                "method": ["One-Hop GO Degree", "Hypergeometric", "Degree", "RW"],
+                "method": ["One-Hop GO Overlap", "Hypergeometric", "Degree", "RW"],
             }
             final_category_data[species].append(species_data)
 
         # Create a figure with 2 subplots (one for each species)
         fig, axes = plt.subplots(
-            2, 3, figsize=(18, 10)
+            1, 5, figsize=(20, 6)
         )  # Create a 2x3 grid of subplots
         axes = axes.flatten()
         colors = ["red", "green", "blue", "orange", "purple"]
@@ -137,19 +137,22 @@ def main():
 
             ax.set_xlim([0.0, 1.0])
             ax.set_ylim([0.0, 1.05])
-            ax.set_xlabel("False Positive Rate")
-            ax.set_ylabel("True Positive Rate")
-            ax.set_title(f"{species_title[idx].capitalize()}")
-            ax.legend(loc="lower right")
+            ax.set_xlabel("False Positive Rate" , fontsize=14)
+            ax.set_ylabel("True Positive Rate" , fontsize=14 )
+            ax.set_title(f"{species_title[idx].capitalize()}" , fontsize=14)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), fontsize=12  )
 
-        axes[5].set_visible(False)
+        # axes[5].set_visible(False)
         fig.suptitle("ROC Curve for All Species w/ " + subplot_titles[k], fontsize=20)
+        # Adjust layout to prevent overlap
+        plt.tight_layout(rect=[0, 0.05, 1, 0.95])  # Adjust rect to accommodate legends
+        # Adjust the space between subplots
+        plt.subplots_adjust(wspace=0.2)
         plt.savefig(Path("./results/images/", f"roc_{subplot_titles[k].lower().replace(" ", "_")}"))
-        plt.tight_layout()
         plt.show()
 
         fig, axes = plt.subplots(
-            2, 3, figsize=(18, 10)
+            1, 5, figsize=(20, 6)
         )  # Create a 2x3 grid of subplots
         axes = axes.flatten()
         colors = ["red", "green", "blue", "orange", "purple"]
@@ -169,17 +172,20 @@ def main():
 
             ax.set_xlim([0.0, 1.0])
             ax.set_ylim([0.0, 1.05])
-            ax.set_xlabel("Recall")
-            ax.set_ylabel("Precision")
-            ax.set_title(f"{species_title[idx].capitalize()}")
-            ax.legend(loc="lower right")
+            ax.set_xlabel("Recall" , fontsize=14)
+            ax.set_ylabel("Precision", fontsize=14)
+            ax.set_title(f"{species_title[idx].capitalize()}", fontsize=14)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.17), fontsize=12  )
 
-        axes[5].set_visible(False)
+        # axes[5].set_visible(False)
         fig.suptitle(
             "Precision/Recall Curve for All Species w/ " + subplot_titles[k],
             fontsize=20,
         )
-        plt.tight_layout()
+        # Adjust layout to prevent overlap
+        plt.tight_layout(rect=[0, 0.05, 1, 0.95])  # Adjust rect to accommodate legends
+        # Adjust the space between subplots
+        plt.subplots_adjust(wspace=0.2)
         plt.savefig(Path("./results/images/", f"pr_{subplot_titles[k].lower().replace(" ", "_")}"))
         plt.show()
         k += 1
@@ -236,7 +242,7 @@ def main():
                 final_rw_data[species][idx]["tpr"],
                 color=colors[i],
                 lw=2,
-                label=f"{species_title[i]} (area = %0.2f)" % final_rw_data[species][0]["roc"],
+                label=f"{species_title[i]} (area = %0.2f)" % final_rw_data[species][idx]["roc"],
             )
 
         ax.set_xlim([0.0, 1.0])
@@ -269,7 +275,7 @@ def main():
                 final_rw_data[species][idx]["precision"],
                 color=colors[i],
                 lw=2,
-                label=f"{species_title[i]} (area = %0.2f)" % final_rw_data[species][0]["pr"],
+                label=f"{species_title[i]} (area = %0.2f)" % final_rw_data[species][idx]["pr"],
             )
 
         ax.set_xlim([0.0, 1.0])
