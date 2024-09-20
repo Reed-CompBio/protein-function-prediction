@@ -117,7 +117,7 @@ def main():
 
         # Create a figure with 2 subplots (one for each species)
         fig, axes = plt.subplots(
-            2, 3, figsize=(20, 6)
+            2, 3, figsize=(17, 12)
         )  # Create a 2x3 grid of subplots
         axes = axes.flatten()
         colors = ["red", "green", "blue", "orange", "purple"]
@@ -152,7 +152,7 @@ def main():
         plt.show()
 
         fig, axes = plt.subplots(
-            2, 3, figsize=(20, 6)
+            2, 3, figsize=(17, 12)
         )  # Create a 2x3 grid of subplots
         axes = axes.flatten()
         colors = ["red", "green", "blue", "orange", "purple"]
@@ -283,7 +283,7 @@ def main():
         ax.set_xlabel("Recall")
         ax.set_ylabel("Precision")
         ax.set_title(f"{subplot_titles[idx]}")
-        ax.legend(loc="lower right")
+        ax.legend(loc="lower left")
 
     # Adjust layout and show the plot
     fig.suptitle(
