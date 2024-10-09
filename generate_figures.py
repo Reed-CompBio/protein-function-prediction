@@ -55,7 +55,13 @@ def create_plot(ax, x_data: list, y_data: list, auc: float, type: str, color) ->
 def main():
     print("Generating figures")
     species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
-    species_title = ["C. elegans", "D. melanogaster", "B. subtilis", "S. cerevisiae", "D. rerio"]
+    species_title = [
+        "C. elegans",
+        "D. melanogaster",
+        "B. subtilis",
+        "S. cerevisiae",
+        "D. rerio",
+    ]
 
     file_directories = [
         "./results/final-non-inferred-complete/",
@@ -148,7 +154,7 @@ def main():
         plt.tight_layout()  # Adjust rect to accommodate legends
         # Adjust the space between subplots
         plt.subplots_adjust(wspace=0.2)
-        plt.savefig(Path("./results/images/", f"roc_{subplot_titles[k].lower().replace(" ", "_")}"))
+        plt.savefig(Path("./results/images/", f"roc_{subplot_titles[k].lower().replace(" ", "_")}.pdf"), format="pdf")
         plt.show()
 
         fig, axes = plt.subplots(
@@ -186,7 +192,7 @@ def main():
         plt.tight_layout()  # Adjust rect to accommodate legends
         # Adjust the space between subplots
         plt.subplots_adjust(wspace=0.2)
-        plt.savefig(Path("./results/images/", f"pr_{subplot_titles[k].lower().replace(" ", "_")}"))
+        plt.savefig(Path("./results/images/", f"pr_{subplot_titles[k].lower().replace(" ", "_")}.pdf"), format="pdf")
         plt.show()
         k += 1
 
@@ -228,7 +234,7 @@ def main():
             final_rw_data[species].append(species_data)
 
     # Create a 2x2 subplot layout
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10))  # 2 rows, 2 columns
+    fig, axs = plt.subplots(1, 4, figsize=(40, 12))  # 2 rows, 2 columns
     axs = axs.flatten()  # Flatten to easily index the subplots
 
     colors = ["red", "green", "blue", "orange", "purple"]
@@ -242,26 +248,28 @@ def main():
                 final_rw_data[species][idx]["tpr"],
                 color=colors[i],
                 lw=2,
-                label=f"${species_title[i]}$ (area = %0.2f)" % final_rw_data[species][idx]["roc"],
+                label=f"${species_title[i]}$ (area = %0.2f)"
+                % final_rw_data[species][idx]["roc"],
             )
 
         ax.set_xlim([0.0, 1.0])
         ax.set_ylim([0.0, 1.05])
-        ax.set_xlabel("False Positive Rate")
-        ax.set_ylabel("True Positive Rate")
-        ax.set_title(f"{subplot_titles[idx]}")
-        ax.legend(loc="lower right")
+        ax.set_xlabel("False Positive Rate", fontsize=30)
+        ax.set_ylabel("True Positive Rate", fontsize=30)
+        ax.set_title(f"{subplot_titles[idx]}", fontsize=30)
+        ax.legend(loc="lower right", fontsize=30)
+        ax.tick_params(axis="both", which="major", labelsize=20)
 
     # Adjust layout and show the plot
     fig.suptitle(
         "ROC Curve for RandomWalk Configuration",
-        fontsize=20,
+        fontsize=45,
     )
-    plt.savefig(Path("./results/images/rw_roc.png"))
     plt.tight_layout()
+    plt.savefig(Path("./results/images/rw_roc.pdf"), format="pdf")
     plt.show()
 
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10))  # 2 rows, 2 columns
+    fig, axs = plt.subplots(1, 4, figsize=(40, 12))  # 2 rows, 2 columns
     axs = axs.flatten()  # Flatten to easily index the subplots
 
     colors = ["red", "green", "blue", "orange", "purple"]
@@ -275,23 +283,25 @@ def main():
                 final_rw_data[species][idx]["precision"],
                 color=colors[i],
                 lw=2,
-                label=f"${species_title[i]}$ (area = %0.2f)" % final_rw_data[species][idx]["pr"],
+                label=f"${species_title[i]}$ (area = %0.2f)"
+                % final_rw_data[species][idx]["pr"],
             )
 
         ax.set_xlim([0.0, 1.0])
         ax.set_ylim([0.0, 1.05])
-        ax.set_xlabel("Recall")
-        ax.set_ylabel("Precision")
-        ax.set_title(f"{subplot_titles[idx]}")
-        ax.legend(loc="lower left")
+        ax.set_xlabel("Recall", fontsize=30)
+        ax.set_ylabel("Precision", fontsize=30)
+        ax.set_title(f"{subplot_titles[idx]}", fontsize=30)
+        ax.legend(loc="lower right", fontsize=30)
+        ax.tick_params(axis="both", which="major", labelsize=20)
 
     # Adjust layout and show the plot
     fig.suptitle(
         "Precision/Recall Curve for RandomWalk Configuration",
-        fontsize=20,
+        fontsize=45,
     )
-    plt.savefig(Path("./results/images/rw_pr.png"))
     plt.tight_layout()
+    plt.savefig(Path("./results/images/rw_pr.pdf"), format="pdf")
     plt.show()
 
 
