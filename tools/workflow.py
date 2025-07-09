@@ -735,7 +735,7 @@ def sample_data_neighbor_degree_ratio(
     positive_dataset = {"protein": [], "go": []}
     temp_positive_dataset = {"protein": [], "go": []}
     negative_dataset = {"protein": [], "go": []}
-    ratio = 2
+    ratio = 100
 
     # sample the data
     for edge in sample(list(go_protein_pairs), sample_size):

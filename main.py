@@ -67,6 +67,10 @@ def main():
     elegans_reg_path = Path("./network/elegans_reg.csv")
     elegans_go_association_path = Path("./network/elegans_proGo.csv")
     elegans_go_association_mixed_path = Path("./network/elegans_proGo_mixed.csv")
+    athaliana_interactome_path = Path("./network/athaliana_proPro.csv")
+    athaliana_reg_path = Path("./network/athaliana_reg.csv")
+    # athaliana_go_association_path = Path("./network/athaliana_proGo.csv")
+    athaliana_go_association_mixed_path = Path("./network/athaliana_proGo_mixed.csv")
     go_depth_path = Path("./network/go_depth.csv")
 
     output_data_path = Path("./output/data/")
@@ -79,7 +83,7 @@ def main():
     namespace = ["molecular_function", "biological_process", "cellular_component"]
     sample_size = 1000
     repeats = 1
-    new_random_lists = False
+    new_random_lists = True
     print_graphs = True
     no_inferred_edges = False
     go_term_type = [namespace[0], namespace[1], namespace[2]]
@@ -155,10 +159,10 @@ def main():
         interactome, regulatory_interactome, go_protein_pairs, go_depth_dict
     )
     # export_graph_to_pickle(G, graph_file_path)
-    # Creates a graph with only protein-protein edges (used for RandomWalkV4)
+    # # Creates a graph with only protein-protein edges (used for RandomWalkV4)
     # P, protein_list = create_only_protein_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
     # export_graph_to_pickle(P, "./output/dataset/protein.pickle")
-    # Creates a graph with only protein-GO term edges (used for RandomWalkV5)
+    # # Creates a graph with only protein-GO term edges (used for RandomWalkV5)
     # D = create_go_protein_only_network(interactome,regulatory_interactome, go_protein_pairs, go_depth_dict)
     # export_graph_to_pickle(D, "./output/dataset/go_protein.pickle")
 
@@ -169,14 +173,14 @@ def main():
         # "OverlappingNeighborsV3": OverlappingNeighborsV3,
         "OneHopGODegree": OneHopGODegree,
         # "ProteinDegree": ProteinDegree,
-        "ProteinDegreeV2": ProteinDegreeV2,
-        # "ProteinDegreeV3": ProteinDegreeV3,
-        "SampleAlgorithm": SampleAlgorithm,
+        # "ProteinDegreeV2": ProteinDegreeV2,
+        "ProteinDegreeV3": ProteinDegreeV3,
+        # "SampleAlgorithm": SampleAlgorithm,
         # "HypergeometricDistribution": HypergeometricDistribution,
         # "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
         # "RandomWalk": RandomWalk,
-        # "RandomWalkV2": RandomWalkV2,
+        "RandomWalkV2": RandomWalkV2,
         # "RandomWalkV3": RandomWalkV3,
         # "RandomWalkV4": RandomWalkV4,   #need protein-only network
         # "RandomWalkV5": RandomWalkV5,     #need protein-goterm only network

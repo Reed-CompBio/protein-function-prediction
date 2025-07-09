@@ -1,5 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
+import sys
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -54,13 +55,15 @@ def create_plot(ax, x_data: list, y_data: list, auc: float, type: str, color) ->
 
 def main():
     print("Generating figures")
-    species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
+    species_list = ["elegans", "fly", "bsub", "yeast", "zfish", "athaliana", "ecoli"]
     species_title = [
         "C. elegans",
         "D. melanogaster",
         "B. subtilis",
         "S. cerevisiae",
         "D. rerio",
+        "A. thaliana",
+        "E. coli",
     ]
 
     file_directories = [
@@ -123,10 +126,10 @@ def main():
 
         # Create a figure with 2 subplots (one for each species)
         fig, axes = plt.subplots(
-            2, 3, figsize=(17, 12)
+            2, 4, figsize=(17, 12)
         )  # Create a 2x3 grid of subplots
         axes = axes.flatten()
-        colors = ["red", "green", "blue", "orange", "purple"]
+        colors = ["red", "green", "blue", "orange", "purple", "black", "yellow"]
 
         for idx, species in enumerate(species_list):
             ax = axes[idx]  # Get the subplot axis for the current species
@@ -143,25 +146,31 @@ def main():
 
             ax.set_xlim([0.0, 1.0])
             ax.set_ylim([0.0, 1.05])
-            ax.set_xlabel("False Positive Rate" , fontsize=14)
-            ax.set_ylabel("True Positive Rate" , fontsize=14 )
+            ax.set_xlabel("False Positive Rate", fontsize=14)
+            ax.set_ylabel("True Positive Rate", fontsize=14)
             ax.set_title(f"${species_title[idx].capitalize()}$", fontsize=14)
-            ax.legend(loc="lower right", fontsize=12  )
+            ax.legend(loc="lower right", fontsize=12)
 
-        axes[5].set_visible(False)
+        axes[7].set_visible(False)
         fig.suptitle("ROC Curve for All Species w/ " + subplot_titles[k], fontsize=20)
         # Adjust layout to prevent overlap
         plt.tight_layout()  # Adjust rect to accommodate legends
         # Adjust the space between subplots
         plt.subplots_adjust(wspace=0.2)
-        plt.savefig(Path("./results/images/", f"roc_{subplot_titles[k].lower().replace(" ", "_")}.pdf"), format="pdf")
+        plt.savefig(
+            Path(
+                "./results/images/",
+                f"roc_{subplot_titles[k].lower().replace(" ", "_")}.pdf",
+            ),
+            format="pdf",
+        )
         plt.show()
 
         fig, axes = plt.subplots(
-            2, 3, figsize=(17, 12)
+            2, 4, figsize=(17, 12)
         )  # Create a 2x3 grid of subplots
         axes = axes.flatten()
-        colors = ["red", "green", "blue", "orange", "purple"]
+        colors = ["red", "green", "blue", "orange", "purple", "black", "yellow"]
 
         for idx, species in enumerate(species_list):
             ax = axes[idx]  # Get the subplot axis for the current species
@@ -178,12 +187,12 @@ def main():
 
             ax.set_xlim([0.0, 1.0])
             ax.set_ylim([0.0, 1.05])
-            ax.set_xlabel("Recall" , fontsize=14)
+            ax.set_xlabel("Recall", fontsize=14)
             ax.set_ylabel("Precision", fontsize=14)
             ax.set_title(f"${species_title[idx].capitalize()}$", fontsize=14)
-            ax.legend(loc="lower right", fontsize=12  )
+            ax.legend(loc="lower right", fontsize=12)
 
-        axes[5].set_visible(False)
+        axes[7].set_visible(False)
         fig.suptitle(
             "Precision/Recall Curve for All Species w/ " + subplot_titles[k],
             fontsize=20,
@@ -192,13 +201,19 @@ def main():
         plt.tight_layout()  # Adjust rect to accommodate legends
         # Adjust the space between subplots
         plt.subplots_adjust(wspace=0.2)
-        plt.savefig(Path("./results/images/", f"pr_{subplot_titles[k].lower().replace(" ", "_")}.pdf"), format="pdf")
+        plt.savefig(
+            Path(
+                "./results/images/",
+                f"pr_{subplot_titles[k].lower().replace(" ", "_")}.pdf",
+            ),
+            format="pdf",
+        )
         plt.show()
         k += 1
 
     # generate RW figures
 
-    species_list = ["elegans", "fly", "bsub", "yeast", "zfish"]
+    species_list = ["elegans", "fly", "bsub", "yeast", "zfish", "athaliana", "ecoli"]
     file_directories = [
         "./results/final-rw-inferred-regular/",
         "./results/final-rw-inferred-pro-go/",
@@ -237,7 +252,7 @@ def main():
     fig, axs = plt.subplots(1, 4, figsize=(40, 12))  # 2 rows, 2 columns
     axs = axs.flatten()  # Flatten to easily index the subplots
 
-    colors = ["red", "green", "blue", "orange", "purple"]
+    colors = ["red", "green", "blue", "orange", "purple", "black", "magenta"]
 
     # Plot data for each directory on a subplot
     for idx, directory in enumerate(file_directories):
@@ -272,7 +287,7 @@ def main():
     fig, axs = plt.subplots(1, 4, figsize=(40, 12))  # 2 rows, 2 columns
     axs = axs.flatten()  # Flatten to easily index the subplots
 
-    colors = ["red", "green", "blue", "orange", "purple"]
+    colors = ["red", "green", "blue", "orange", "purple", "black", "magenta"]
 
     # Plot data for each directory on a subplot
     for idx, directory in enumerate(file_directories):
