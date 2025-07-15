@@ -83,6 +83,7 @@ def main():
     namespace = ["molecular_function", "biological_process", "cellular_component"]
     sample_size = 1000
     repeats = 1
+    ratio = 100
     new_random_lists = True
     print_graphs = True
     no_inferred_edges = False
@@ -180,11 +181,16 @@ def main():
         # "HypergeometricDistributionV2": HypergeometricDistributionV2,
         "HypergeometricDistributionV3": HypergeometricDistributionV3,
         # "RandomWalk": RandomWalk,
-        "RandomWalkV2": RandomWalkV2,
+        # "RandomWalkV2": RandomWalkV2,
         # "RandomWalkV3": RandomWalkV3,
         # "RandomWalkV4": RandomWalkV4,   #need protein-only network
         # "RandomWalkV5": RandomWalkV5,     #need protein-goterm only network
     }
+
+    # for PW paper, we used OneHopGODegree, ProteinDegreeV3, HypergeometricDistributionV3, and RandomWalkV2
+    # with inferred and non inferred GO terms
+    # with complete network and ProGo only network
+    # using ratio of 1:1000
 
     run_workflow(
         algorithm_classes,
@@ -199,6 +205,7 @@ def main():
         new_random_lists,
         short_name,
         print_graphs,
+        ratio
     )
 
     sys.exit()
